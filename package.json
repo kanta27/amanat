@@ -1,0 +1,12 @@
+{
+  "name": "amanat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Amanat: find and protect a family's financial assets. Product case study prototype.",
+  "scripts": {
+    "test": "node tests/core.test.js && node tests/registry-lookup.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

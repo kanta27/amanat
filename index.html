@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amanat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#13296B; --ink-2:#2B3B5C; --muted:#64749A; --faint:#93A0BE;
+  --blue:#2D5BD7; --blue-deep:#1B3A8C; --blue-mid:#4A77E0;
+  --blue-light:#D9E4FB; --blue-tint:#EDF3FE;
+  --yellow:#F5B51F; --yellow-deep:#9A6E05;
+  --paper:#F6F9FF; --card:#FFFFFF; --line:#DCE5F5; --line-soft:#EDF2FB;
+  --amber:#9A6E05; --amber-bg:#FEF3D8;
+  --clay:#C8402F; --clay-bg:#FDEBE8;
+  --ok:#0F7F58; --ok-bg:#E0F3EC;
+  --r-lg:16px; --r:11px; --r-sm:8px;
+  --sh:0 1px 2px rgba(19,41,107,.06), 0 1px 3px rgba(19,41,107,.05);
+  --sh-lift:0 10px 26px rgba(19,41,107,.14);
+  --display:'Plus Jakarta Sans',system-ui,sans-serif; --sans:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue-deep)}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.025em;line-height:1.18;color:var(--ink)}
+h1{font-size:28px}h2{font-size:21px}h3{font-size:16px;font-weight:700}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+#root{height:100%;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:18px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.brand small{font-family:var(--sans);font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;padding-top:3px}
+.topbar .sp{flex:1}
+.seg{display:flex;background:var(--blue-tint);border-radius:var(--r-sm);padding:2px;gap:2px}
+.seg button{padding:5px 11px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+.ghost{padding:6px 12px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;color:var(--muted);border:1px solid var(--line)}
+.ghost:hover{background:var(--blue-tint);color:var(--ink)}
+
+/* device frame */
+.stage{flex:1;display:flex;justify-content:center;padding:0;min-height:0}
+.stage.mobile{overflow-y:auto;align-items:flex-start}
+.stage.mobile{padding:26px 16px;background:repeating-linear-gradient(45deg,#F1F0EC,#F1F0EC 10px,#EDECE7 10px,#EDECE7 20px)}
+.device{width:100%;display:flex;flex-direction:column;min-height:0;height:100%}
+.stage.mobile .device{width:392px;max-width:100%;height:788px;background:var(--paper);border:9px solid #232825;border-radius:34px;overflow:hidden;box-shadow:0 18px 50px rgba(31,36,33,.22);position:relative}
+.stage.mobile .device::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:21px;background:#232825;border-radius:0 0 13px 13px;z-index:60}
+
+/* layout */
+.layout{flex:1;display:flex;min-height:0}
+.side{width:206px;flex-shrink:0;overflow-y:auto;background:var(--card);border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:3px}
+.side .lbl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:8px 10px 5px}
+.side button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;width:100%}
+.side button:hover{background:var(--blue-tint)}
+.side button[aria-current="page"]{background:var(--blue-tint);color:var(--blue-deep);font-weight:600}
+.side button svg{flex-shrink:0;opacity:.75}
+.side button[aria-current="page"] svg{opacity:1}
+.side .pill{margin-left:auto;background:var(--clay);color:#fff;font-size:10px;font-weight:600;border-radius:9px;padding:1px 6px;min-width:18px;text-align:center}
+.content{flex:1;overflow-y:auto;min-width:0;min-height:0}
+.wrap{max-width:860px;margin:0 auto;padding:28px 26px 72px}
+.tabbar{display:none}
+
+/* mobile */
+.m .layout{flex-direction:column}
+.m .side{display:none}
+.m .content{padding-bottom:4px}
+.m .wrap{padding:18px 15px 26px}
+.m .topbar{padding:12px 15px 9px}
+.m .tabbar{display:flex;background:var(--card);border-top:1px solid var(--line);padding:7px 4px 19px;flex-shrink:0}
+.m .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;font-size:10px;font-weight:500;color:var(--faint);border-radius:var(--r-sm);position:relative}
+.m .tabbar button[aria-current="page"]{color:var(--blue-deep)}
+.m .tabbar .dot{position:absolute;top:3px;right:50%;margin-right:-17px;width:7px;height:7px;background:var(--clay);border-radius:50%}
+.m h1{font-size:23px}.m h2{font-size:18px}
+.m .grid-2,.m .grid-3{grid-template-columns:1fr}
+.m .split{flex-direction:column}
+.m .hero-ill{display:none}
+
+/* ---------- primitives ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.card.flat{box-shadow:none}
+.card+.card{margin-top:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.split{display:flex;gap:18px}
+.row{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+.eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--blue);margin-bottom:7px}
+.sub{color:var(--muted);font-size:13.5px}
+.tiny{font-size:11.5px;color:var(--faint)}
+.hr{height:1px;background:var(--line-soft);margin:14px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 15px;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;background:var(--blue-deep);color:#fff;transition:background .15s}
+.btn:hover{background:#163275}
+.btn.sec{background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.sec:hover{background:var(--blue-tint)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--blue-tint);color:var(--blue-deep);white-space:nowrap}
+.badge.warn{border:1px solid #F1DCA6}
+.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.badge.bad{background:var(--clay-bg);color:var(--clay)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.mock{background:#EEF1F8;color:var(--muted);font-weight:500}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);font-size:13.5px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--blue-light);border-color:var(--blue)}
+.field .hint{font-size:11.5px;color:var(--faint);margin-top:4px}
+.empty{text-align:center;padding:38px 20px;color:var(--muted)}
+.empty h3{margin-bottom:6px;color:var(--ink)}
+
+/* list rows */
+.item{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.item:last-child{border-bottom:none}
+.item .ico{width:34px;height:34px;border-radius:9px;background:var(--blue-tint);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue-deep)}
+.item .bd{flex:1;min-width:0}
+.item .t{font-weight:600;font-size:13.5px}
+.item .s{font-size:12.5px;color:var(--muted);margin-top:1px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+
+/* ring */
+.ring-wrap{display:flex;align-items:center;gap:18px}
+.ring{position:relative;width:104px;height:104px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .num b{font-family:var(--display);font-size:27px;font-weight:800;line-height:1;color:var(--ink)}
+.ring .num span{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+.rd{display:flex;flex-direction:row-reverse;align-items:center;gap:9px}
+.rd .bar{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px}
+.rd .bar i{display:block;height:100%;background:var(--blue)}
+.rd .lb{width:200px;flex-shrink:0;color:var(--muted)}
+.m .rd{flex-direction:column;align-items:stretch;gap:5px}
+.m .rd .lb{width:auto}
+.m .rd .bar{flex:none;width:100%;height:6px}
+.m .ring{width:84px;height:84px}
+.m .ring svg{width:84px;height:84px}
+.m .ring-wrap{gap:13px}
+
+/* stepper */
+.steps{display:flex;gap:5px;margin-bottom:20px}
+.steps i{height:3px;flex:1;background:var(--line);border-radius:2px}
+.steps i.on{background:var(--blue)}
+.steps i.done{background:var(--blue-deep)}
+
+/* chooser */
+.chooser{max-width:880px;margin:0 auto;padding:40px 26px 60px;position:relative}
+.chooser::before{content:'';position:absolute;top:0;left:-50vw;right:-50vw;height:356px;background:var(--blue-tint);clip-path:polygon(0 0,100% 0,100% 76%,0 100%);z-index:0}
+.chooser>*{position:relative;z-index:1}
+.deco{position:absolute;inset:0;z-index:0;pointer-events:none}
+.deco i{position:absolute;width:15px;height:15px;opacity:.6}
+.deco i::before,.deco i::after{content:'';position:absolute;background:var(--blue-mid);border-radius:1px}
+.deco i::before{left:0;top:6px;width:15px;height:3px}
+.deco i::after{top:0;left:6px;width:3px;height:15px}
+.deco i.y::before,.deco i.y::after{background:var(--yellow);opacity:.95}
+.m .deco{display:none}
+.m .chooser::before{height:250px}
+.chooser .lead{text-align:center;margin-bottom:30px}
+.chooser .lead h1{font-size:34px;margin-bottom:10px}
+.m .chooser{padding:22px 15px 30px}
+.m .chooser .lead h1{font-size:26px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.m .pick{grid-template-columns:1fr}
+.pick button{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:left;transition:border-color .15s,box-shadow .15s,transform .15s}
+.pick button{position:relative;overflow:hidden}
+.pick button::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--yellow);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.pick button:hover{border-color:var(--blue);box-shadow:var(--sh-lift);transform:translateY(-2px)}
+.pick button:hover::after{transform:scaleX(1)}
+.pick .ill{margin:-22px -22px 16px;padding:18px 0 0;background:var(--blue-tint);display:flex;justify-content:center;align-items:flex-end;min-height:198px;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
+.pick .ill img{display:block}
+.hero-art{display:flex;justify-content:center;margin:4px 0 18px}
+.hero-art img{max-width:100%}
+.pick h3{font-size:18px;margin-bottom:6px}
+.pick p{font-size:13px;color:var(--muted);line-height:1.5}
+.pick .go{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:12.5px;font-weight:600;color:var(--blue-deep)}
+
+/* lead cards */
+.lead-card{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--card)}
+.lead-card+.lead-card{margin-top:9px}
+.lead-card .hd{display:flex;align-items:flex-start;gap:10px}
+.m .lead-card .hd{flex-wrap:wrap}
+.m .lead-card .hd>select{margin-left:42px;width:calc(100% - 42px)}
+.lk{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--blue-deep);text-decoration:none}
+.lk:hover{text-decoration:underline}
+
+/* pipeline */
+.pipe{display:flex;gap:4px;margin:14px 0 4px;overflow-x:auto;padding-bottom:4px}
+.pipe button{flex:1;min-width:84px;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 6px;text-align:center;background:var(--card)}
+.pipe button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-tint)}
+.pipe b{display:block;font-family:var(--display);font-size:17px;font-weight:800;color:var(--ink)}
+.pipe span{font-size:10.5px;color:var(--muted)}
+
+/* copy chip */
+.cp{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--card);font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}
+.cp:hover{border-color:var(--blue);background:var(--blue-tint)}
+
+/* toast + sheet */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .22s;z-index:100}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.scrim{position:fixed;inset:0;background:rgba(31,36,33,.38);display:flex;align-items:center;justify-content:center;padding:20px;z-index:80}
+.sheet{background:var(--card);border-radius:var(--r-lg);width:100%;max-width:470px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(31,36,33,.25)}
+.sheet h2{margin-bottom:4px}
+.sheet .act{display:flex;gap:9px;margin-top:18px}
+.sheet .act .btn{flex:1}
+.stage.mobile .scrim{position:absolute}
+
+.note{display:flex;gap:9px;padding:11px 13px;border-radius:var(--r);background:var(--blue-tint);font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.note.warn{background:var(--amber-bg)}
+.note b{font-weight:600}
+.scroll-x{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);padding:0 10px 8px 0;white-space:nowrap}
+td{padding:10px 10px 10px 0;border-top:1px solid var(--line-soft);vertical-align:top}
+.ol{counter-reset:s;list-style:none}
+.ol li{counter-increment:s;position:relative;padding-left:32px;margin-bottom:13px}
+.ol li::before{content:counter(s);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--blue-tint);color:var(--blue-deep);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ck{list-style:none}
+.ck li{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.ck li:last-child{border:none}
+.ck input{margin-top:3px;accent-color:var(--blue-deep);width:15px;height:15px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast"></div>
+<div id="modal"></div>
+
+<script>
+"use strict";
+
+/* ============================ icons ============================ */
+const I = {
+  shield:'<path d="M12 3l7 3v5c0 4.2-2.9 7.9-7 9-4.1-1.1-7-4.8-7-9V6l7-3z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  home:'<path d="M4 11l8-6 8 6"/><path d="M6 10v9h12v-9"/>',
+  bank:'<path d="M3 9l9-5 9 5"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 20h18"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M16 5.5a3 3 0 010 5.6"/><path d="M18 20c0-2.4-.9-4-2.3-4.7"/>',
+  lock:'<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 118 0v3"/>',
+  file:'<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/>',
+  folder:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  alert:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  ext:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/>',
+  back:'<path d="M19 12H5M11 18l-6-6 6-6"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  tax:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h3"/>'
+};
+const ic = (n,s=17)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${I[n]||''}</svg>`;
+
+/* line-art illustrations, matching the Canva reference style */
+const ILL = {
+  protect:'<img src="img/family-umbrella.webp" alt="A family sheltering under an umbrella" width="150" height="180" style="height:180px;width:auto">',
+  find:'<img src="img/mother-son.webp" alt="A mother and son with documents and claim papers" width="207" height="180" style="height:180px;width:auto">',
+  registry:'<img src="img/family-sofa.webp" alt="A family together on a sofa under an umbrella" width="210" height="190" style="height:190px;width:auto">',
+  recovery:'<img src="img/clipboard.webp" alt="A person with flowers beside a checklist of records" width="185" height="190" style="height:190px;width:auto">'
+};
+
+/* ============================ data ============================ */
+const INST = {
+  bank:['State Bank of India','HDFC Bank','ICICI Bank','Punjab National Bank','Axis Bank','Bank of Baroda','Canara Bank','Kotak Mahindra Bank','Union Bank of India','Other bank'],
+  insurance:['LIC of India','HDFC Life','ICICI Prudential Life','SBI Life','Max Life','Bajaj Allianz Life','Other insurer'],
+  mf:['SBI Mutual Fund','HDFC Mutual Fund','ICICI Prudential MF','Nippon India MF','Axis Mutual Fund','Other AMC'],
+  demat:['Zerodha','Groww','Upstox','Angel One','HDFC Securities','ICICI Direct','Other broker'],
+  epf:['EPFO'],
+  post:['India Post'],
+  shares:['Held directly in physical form','Held in demat']
+};
+const TYPES = [
+  {k:'bank', t:'Bank account or deposit', portal:'UDGAM'},
+  {k:'insurance', t:'Life insurance policy', portal:'Bima Bharosa'},
+  {k:'mf', t:'Mutual fund folio', portal:'MITRA / MF Central'},
+  {k:'demat', t:'Demat / shares', portal:'IEPF'},
+  {k:'epf', t:'Provident fund (EPF)', portal:'EPFO'},
+  {k:'post', t:'Post office savings / NSC / KVP', portal:'India Post'}
+];
+const TYPE_LABEL = Object.fromEntries(TYPES.map(t=>[t.k,t.t]));
+
+const PORTALS = [
+  {id:'udgam', n:'UDGAM', who:'Reserve Bank of India', what:'Dormant and unclaimed bank deposits across participating banks.',
+   need:['Name of the account holder','One ID proof — PAN or Aadhaar','Date of birth helps narrow matches'],
+   out:'A results grid with bank, branch and a UDRN reference per match.',
+   note:'Search only. The claim itself is filed at the bank that held the account.',
+   url:'https://udgam.rbi.org.in/unclaimed-deposits/'},
+  {id:'iepf', n:'IEPF', who:'Investor Education and Protection Fund Authority', what:'Unclaimed shares and dividends transferred from listed companies.',
+   need:['Name as it appears on the share certificate or folio','Company name, if known','Folio or DP/Client ID, if known'],
+   out:'Matching entries per company. Claims go through form IEPF-5.',
+   note:'Worth checking even if the family never traded — old employer shares and IPO allotments often sit here.',
+   url:'https://www.iepf.gov.in/'},
+  {id:'bima', n:'Bima Bharosa', who:'IRDAI', what:'Unclaimed insurance maturity proceeds and unpaid claims.',
+   need:['Policy number, if known','Name and date of birth','Insurer name, if known'],
+   out:'Policy status, plus a grievance route if the insurer does not respond.',
+   note:'Each insurer also runs its own unclaimed-amount search — check both.',
+   url:'https://bimabharosa.irdai.gov.in/'},
+  {id:'mitra', n:'MITRA / MF Central', who:'SEBI, CAMS and KFintech', what:'Inactive and unclaimed mutual fund folios.',
+   need:['PAN of the folio holder','Name and date of birth'],
+   out:'Folios traced against that PAN, across AMCs.',
+   note:'If you can reach the deceased’s email, a CAS request often returns more than the portal does.',
+   url:'https://www.mfcentral.com/'},
+  {id:'epfo', n:'EPFO', who:'Employees’ Provident Fund Organisation', what:'Provident fund balances, including inoperative accounts from old employers.',
+   need:['UAN, or the employer name and period of service','Member ID from an old payslip helps a great deal'],
+   out:'Balance and claim status per member ID.',
+   note:'One person often has several member IDs across employers that were never merged.',
+   url:'https://www.epfindia.gov.in/'}
+];
+
+const EMAIL_TERMS = ['Consolidated Account Statement','NSDL CAS','CDSL CAS','folio number','policy number','premium due','maturity','UAN','dividend','demat','statement of account','nomination'];
+
+const DOCS = [
+  {id:'death', n:'Death certificate', why:'Required by every single institution. Get 8–10 certified copies at the outset.', hard:false},
+  {id:'pan_d', n:'PAN of the deceased', why:'The key that unlocks CAS, AIS and most portal searches.', hard:false},
+  {id:'aadhaar_d', n:'Aadhaar of the deceased', why:'Accepted as ID proof on UDGAM and several bank claim forms.', hard:false},
+  {id:'pan_c', n:'Your own PAN and KYC', why:'Needed as the claimant on every claim form.', hard:false},
+  {id:'heir', n:'Legal heir or surviving member certificate', why:'Issued by the local revenue authority or a court. Needed wherever no nominee was registered.', hard:true},
+  {id:'succ', n:'Succession certificate', why:'Court-issued. Often demanded above a bank’s threshold when there is no nominee.', hard:true},
+  {id:'indem', n:'Indemnity bond and affidavit', why:'Standard where other heirs must consent to your claim.', hard:false},
+  {id:'relation', n:'Proof of relationship', why:'Ration card, passport or school record linking you to the deceased.', hard:false}
+];
+
+const Q = [
+  {id:'name', t:'Whose assets are we tracing?', s:'This stays on your device and in your own private record.', f:'text', ph:'Full name, as it appears on their PAN'},
+  {id:'rel', t:'What was your relationship to them?', s:'This decides which claim route applies to you.', f:'choice', opts:['Spouse','Son or daughter','Parent','Sibling','Other relative','Executor or legal representative']},
+  {id:'nom', t:'Were you registered as a nominee anywhere?', s:'A registered nomination is by far the shortest route — a death certificate and your KYC is often all that is needed.', f:'choice', opts:['Yes, on at least one holding','No','I don’t know']},
+  {id:'pan', t:'Do you have their PAN?', s:'This is the single most useful thing you can have. It unlocks the tax records route.', f:'choice', opts:['Yes','No, but I can get it','No']},
+  {id:'emp', t:'Where did they work?', s:'Each employer usually means a provident fund account, and sometimes shares.', f:'text', ph:'Employers, in any order — leave blank if unsure'},
+  {id:'cities', t:'Which cities did they live in?', s:'Accounts opened in a city they later left are the ones that most often go dormant.', f:'text', ph:'e.g. Nagpur, Pune, Mumbai'},
+  {id:'banks', t:'Which banks do you know they used?', s:'Add any you are unsure about — a wrong guess costs nothing on UDGAM.', f:'text', ph:'e.g. SBI, Bank of Baroda'},
+  {id:'ins', t:'Did they hold life insurance?', s:'LIC policies bought decades ago through an agent are among the most commonly unclaimed assets.', f:'choice', opts:['Yes','I think so','No','I don’t know']},
+  {id:'shares', t:'Did they ever own shares?', s:'Physical share certificates and old IPO allotments frequently end up with the IEPF.', f:'choice', opts:['Yes, and I have papers','Yes, but I have no papers','I don’t know','No']},
+  {id:'post', t:'Any post office savings, NSC or KVP?', s:'Common in smaller towns and among older savers, and rarely tracked digitally.', f:'choice', opts:['Yes','I don’t know','No']},
+  {id:'email', t:'Can you access their email or phone?', s:'Statements are emailed, not posted. This is often the richest single source.', f:'choice', opts:['Yes, email','Yes, phone only','Both','Neither']}
+];
+
+/* ============================ state ============================ */
+let S = {
+  journey:null, view:null, device:'desktop', ready:false, db:null, uid:null,
+  assets:[], people:[], links:[], reporters:[], event:null, log:[],
+  intake:{}, step:0, leads:[], docs:{}, trace:[], evidence:{}, guideTab:'trace', filter:'all', profile:{}, lookup:null
+};
+
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+const fmt = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2100); }
+function logit(what){ S.log.unshift({id:uid(),what,at:new Date().toISOString()}); S.log=S.log.slice(0,60); }
+
+/* ---- persistence ---- */
+const KEYS = ['journey','assets','people','links','reporters','event','log','intake','step','leads','docs','trace','evidence','profile','lookup'];
+let saveTimer=null, booted=false;
+function save(){
+  if(!booted) return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const snap={}; KEYS.forEach(k=>snap[k]=S[k]);
+    try{ localStorage.setItem('amanat_v1', JSON.stringify(snap)); }catch(e){}
+    if(S.db&&S.uid){ try{ await S.db.collection('data/users/'+S.uid).doc('state').set({...snap, at:Date.now()}); }catch(e){} }
+  },420);
+}
+async function boot(){
+  let local=null;
+  try{ const r=localStorage.getItem('amanat_v1'); if(r) local=JSON.parse(r); }catch(e){}
+  if(local) KEYS.forEach(k=>{ if(local[k]!==undefined) S[k]=local[k]; });
+  render();
+  booted=true;
+  const timer=setTimeout(()=>{},10000);
+  try{
+    const db=await claude.use('db'), user=await claude.use('user');
+    if(db&&user){
+      S.db=db; S.uid=await user.id();
+      const doc=await db.collection('data/users/'+S.uid).doc('state').get();
+      const d=doc&&doc.data?(doc.data.at?doc.data:null):null;
+      if(d&&(!local||(d.at||0)>0&&!local.assets?.length&&!local.leads?.length)){
+        KEYS.forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; });
+        render();
+      }
+    }
+  }catch(e){}
+  clearTimeout(timer);
+}
+
+/* ============================ scoring ============================ */
+function readiness(){
+  if(!S.assets.length) return {pct:0, parts:[]};
+  const withNom = S.assets.filter(a=>S.links.some(l=>l.asset===a.id)).length;
+  const regAtInst = S.assets.filter(a=>a.nomAtInst==='yes').length;
+  const withId = S.assets.filter(a=>a.ref&&a.ref.trim()).length;
+  const n=S.assets.length;
+  const parts=[
+    {k:'Nominee designated here', v:withNom, n, w:.4},
+    {k:'Nomination registered at the institution', v:regAtInst, n, w:.35},
+    {k:'Identifier recorded', v:withId, n, w:.15},
+    {k:'Two death reporters set', v:Math.min(S.reporters.length,2), n:2, w:.10}
+  ];
+  const pct=Math.round(parts.reduce((s,p)=>s+(p.v/p.n)*p.w,0)*100);
+  return {pct, parts};
+}
+function gaps(){
+  const g=[];
+  if(S.assets.length&&!(S.profile&&S.profile.pan)) g.push({sev:'bad', t:'Your family cannot find this registry yet', s:'Add your name and PAN. That is how the people you name look you up after your death.', go:()=>{modal(mProfile());bindModal();}});
+  S.assets.forEach(a=>{
+    if(!S.links.some(l=>l.asset===a.id)) g.push({sev:'bad', t:`${a.inst} has no nominee designated`, s:'Nobody will be told this exists.', go:()=>{S.view='r-assets';render();}});
+    else if(a.nomAtInst!=='yes') g.push({sev:'warn', t:`${a.inst} is not nominated at the institution`, s:'Amanat will tell your family, but the institution will still ask for a succession certificate.', go:()=>{S.view='r-assets';render();}});
+  });
+  if(S.reporters.length<2) g.push({sev:'warn', t:'Fewer than two death reporters set', s:'Disclosure needs two independent reports. Set these up or it cannot trigger.', go:()=>{S.view='r-safeguards';render();}});
+  return g.sort((a,b)=>(a.sev==='bad'?0:1)-(b.sev==='bad'?0:1));
+}
+
+/* ============================ leads ============================ */
+function buildLeads(){
+  const a=S.intake, out=[];
+  const add=(portal,type,label,why,score)=>out.push({id:uid(),portal,type,label,why,score,status:'todo',ref:'',note:''});
+  const banks=(a.banks||'').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+  if(banks.length) banks.forEach(b=>add('udgam','bank',b,'You named this bank. Dormant deposits sit with the RBI after ten years.',92));
+  else add('udgam','bank','Bank deposits (bank unknown)','Search UDGAM by name and PAN even without knowing the bank.',70);
+  if((a.cities||'').trim()) add('udgam','bank','Accounts in '+a.cities,'Accounts in cities they moved away from are the most common dormant case.',84);
+  if(a.ins==='Yes') add('bima','insurance','Life insurance policy','You said a policy exists. Maturity proceeds are a large unclaimed category.',90);
+  else if(a.ins==='I think so'||a.ins==='I don’t know') add('bima','insurance','Possible life insurance','Worth one search. Policies bought through an agent are often forgotten by the family.',62);
+  if(a.shares==='Yes, and I have papers') add('iepf','demat','Shares — certificates in hand','You have the paperwork. Shares unclaimed for seven years transfer to the IEPF.',94);
+  else if(a.shares==='Yes, but I have no papers') add('iepf','demat','Shares — no paperwork','Search the IEPF by name. Old employer shares and IPO allotments commonly land there.',78);
+  else if(a.shares==='I don’t know') add('iepf','demat','Possible shareholding','A name search costs nothing and the IEPF holds a very large pool.',55);
+  if((a.emp||'').trim()) (a.emp||'').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).forEach(e=>add('epfo','epf','Provident fund — '+e,'Each employer usually means a separate EPF member ID, often never merged.',88));
+  else add('epfo','epf','Provident fund','Almost every salaried person has one. Inoperative accounts are very common.',66);
+  if(a.post==='Yes') add('post','post','Post office savings, NSC or KVP','You said these exist. They are rarely tracked digitally.',80);
+  else if(a.post==='I don’t know') add('post','post','Possible post office savings','Common among older savers in smaller towns.',48);
+  add('mitra','mf','Mutual fund folios','Traced against their PAN across every AMC at once.',a.pan==='Yes'?86:58);
+  if(a.pan==='Yes') add('tax','tax','Tax records trace (AIS and Form 26AS)','The strongest route you have. Reveals institutions nobody in the family knew about.',99);
+  else add('tax','tax','Tax records trace — needs their PAN','Get their PAN first. This route reveals holdings no portal search will.',75);
+  if(a.email==='Yes, email'||a.email==='Both') add('email','email','Their email inbox','Statements are emailed, not posted. Often the single richest source.',95);
+  return out.sort((x,y)=>y.score-x.score);
+}
+const PORTAL_OF = id => PORTALS.find(p=>p.id===id);
+
+/* ============================ render ============================ */
+const el = document.getElementById('root');
+
+function render(){
+  const m = S.device==='mobile';
+  el.className = m?'m':'';
+  el.innerHTML = topbar() + (S.journey? shell() : `<div class="stage${m?' mobile':''}"><div class="device">${chooser()}</div></div>`);
+  bind();
+  const c=el.querySelector('.content'); if(c) c.scrollTop=0;
+}
+
+function topbar(){
+  return `<div class="topbar">
+    <div class="brand">${S.journey?`<button data-go="chooser" class="ghost" style="padding:4px 8px" title="Back">${ic('back',15)}</button>`:''}
+      <span style="color:var(--blue-deep)">${ic('shield',19)}</span> Amanat <small>prototype</small></div>
+    <div class="sp"></div>
+    ${S.journey?`<span class="badge mock">${S.journey==='registry'?'Protect':'Recover'}</span>`:''}
+    <div class="seg" role="group" aria-label="Device">
+      <button data-dev="desktop" aria-pressed="${S.device==='desktop'}">Web</button>
+      <button data-dev="mobile" aria-pressed="${S.device==='mobile'}">Mobile</button>
+    </div>
+  </div>`;
+}
+
+function chooser(){
+  return `<div class="content"><div class="chooser">
+    <div class="deco" aria-hidden="true"><i style="top:22px;left:4%"></i><i class="y" style="top:70px;right:7%"></i><i style="top:188px;left:1%"></i><i class="y" style="top:14px;right:26%"></i></div>
+    <div class="lead">
+      <div class="eyebrow">Amanat &middot; अमानत</div>
+      <h1>Nothing a family owns should be lost<br>because nobody knew it existed.</h1>
+      <p class="sub" style="max-width:520px;margin:0 auto">Around &#8377;2.2 lakh crore sits unclaimed across India&rsquo;s banks, insurers, funds and provident accounts. Most of it is not lost. It is simply unfindable by the people it belongs to.</p>
+    </div>
+    <div class="pick">
+      <button data-j="registry">
+        <div class="ill">${ILL.protect}</div>
+        <h3>Protect what I hold</h3>
+        <p>Record what you own and who should be told. Close the nomination gaps that turn holdings into unclaimed assets in the first place.</p>
+        <span class="go">Start a registry ${ic('arrow',14)}</span>
+      </button>
+      <button data-j="recovery">
+        <div class="ill">${ILL.find}</div>
+        <h3>Find what was left behind</h3>
+        <p>Someone has died. If they kept an Amanat registry and named you, see what they recorded for you. Then search for anything they didn&rsquo;t record &mdash; or for everything, if they never used Amanat.</p>
+        <span class="go">Start a search ${ic('arrow',14)}</span>
+      </button>
+    </div>
+    <div class="note" style="margin-top:22px"><span style="color:var(--blue-deep);flex-shrink:0">${ic('alert',16)}</span>
+      <div><b>This is a working prototype.</b> Account Aggregator pulls, DigiLocker verification and the government portal searches are simulated and labelled wherever they appear. Every external link opens the real portal.</div></div>
+  </div></div>`;
+}
+
+const NAV = {
+  registry:[{v:'r-home',n:'Overview',i:'home'},{v:'r-assets',n:'Holdings',i:'bank'},{v:'r-people',n:'People',i:'users'},{v:'r-safeguards',n:'Safeguards',i:'lock'}],
+  recovery:[{v:'v-plan',n:'Search plan',i:'map'},{v:'v-guides',n:'Guides',i:'tax'},{v:'v-case',n:'Case file',i:'folder'},{v:'v-docs',n:'Documents',i:'file'}]
+};
+
+function shell(){
+  const m=S.device==='mobile', nav=NAV[S.journey], g=S.journey==='registry'?gaps().length:0;
+  const body = views[S.view] ? views[S.view]() : views[nav[0].v]();
+  const side = `<nav class="side"><div class="lbl">${S.journey==='registry'?'Your registry':'Recovery'}</div>${nav.map(n=>
+    `<button data-v="${n.v}" ${S.view===n.v?'aria-current="page"':''}>${ic(n.i)}<span>${n.n}</span>${n.v==='r-home'&&g?`<span class="pill">${g}</span>`:''}</button>`).join('')}
+    <div style="flex:1"></div>
+    <button data-act="reset" style="color:var(--faint);font-size:12px">Reset prototype</button></nav>`;
+  const tabs = `<nav class="tabbar">${nav.map(n=>
+    `<button data-v="${n.v}" ${S.view===n.v?'aria-current="page"':''}>${n.v==='r-home'&&g?'<i class="dot"></i>':''}${ic(n.i,19)}<span>${n.n}</span></button>`).join('')}</nav>`;
+  return `<div class="stage${m?' mobile':''}"><div class="device"><div class="layout">
+    ${side}<div class="content"><div class="wrap">${body}</div></div></div>${tabs}</div></div>`;
+}
+
+/* ---------------- views ---------------- */
+const views = {};
+
+/* ===== REGISTRY ===== */
+views['r-home'] = () => {
+  const r=readiness(), g=gaps();
+  if(!S.assets.length) return `
+    <div class="hero-art">${ILL.registry}</div>
+    <h1>Your registry is empty</h1>
+    <p class="sub" style="margin:8px 0 20px;max-width:540px">Start by recording one holding. You are not entering balances &mdash; only where it is and who should be told. That takes about thirty seconds per holding.</p>
+    <div class="card"><div class="row" style="align-items:flex-start;gap:14px">
+      <div class="item" style="padding:0;border:0"><div class="ico">${ic('bank')}</div></div>
+      <div class="bd" style="flex:1"><div class="t">Add your first holding</div><div class="s">A bank account, a policy, a folio, your PF — whichever comes to mind first.</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="add-asset">${ic('plus',15)} Add a holding</button>
+      <button class="btn sec" data-act="seed">Load sample data</button></div></div></div></div>
+    <div class="note" style="margin-top:14px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+    <div><b>Why this is worth your time.</b> The most common reason an asset goes unclaimed is not secrecy. It is that the family never knew which institutions to ask.</div></div>`;
+
+  return `
+  <h1>Overview</h1>
+  ${S.profile&&S.profile.pan?`<div class="tiny" style="margin-top:5px">Registry of <b style="color:var(--ink)">${esc(S.profile.name)}</b> &middot; PAN ${esc(maskPan(S.profile.pan))} &middot; <button data-act="profile" class="lk" style="display:inline;padding:0">Edit</button></div>`:''}
+  <p class="sub" style="margin:6px 0 18px">${S.assets.length} holding${S.assets.length>1?'s':''} recorded &middot; ${S.people.length} ${S.people.length===1?'person':'people'} designated</p>
+  <div class="card">
+    <div class="ring-wrap">
+      ${ringSvg(r.pct)}
+      <div style="flex:1">
+        <h3 style="margin-bottom:3px">Readiness</h3>
+        <p class="sub" style="font-size:13px">How much of your registry would actually reach your family today.</p>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+          ${r.parts.map(p=>`<div class="rd">
+            <span class="tiny lb">${p.k} <b class="mono" style="color:var(--ink)">${p.v}/${p.n}</b></span>
+            <div class="bar"><i style="width:${Math.round(p.v/p.n*100)}%"></i></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  ${g.length?`<div class="card"><h3>What is missing</h3>
+    <p class="sub" style="font-size:13px;margin-bottom:4px">Fix these in order. The first is the one that actually loses money.</p>
+    ${g.map((x,i)=>`<div class="item"><div class="ico" style="background:${x.sev==='bad'?'var(--clay-bg)':'var(--amber-bg)'};color:${x.sev==='bad'?'var(--clay)':'var(--amber)'}">${ic('alert')}</div>
+      <div class="bd"><div class="t">${esc(x.t)}</div><div class="s">${esc(x.s)}</div></div>
+      <button class="btn sec sm" data-gap="${i}">Fix</button></div>`).join('')}</div>`
+   :`<div class="card"><div class="row"><span style="color:var(--ok)">${ic('check',20)}</span><div><div class="t" style="font-weight:600">No gaps</div><div class="s sub">Every holding has a nominee and a registered nomination.</div></div></div></div>`}
+  <div class="card"><div class="row"><h3 style="flex:1">Simulate what happens next</h3><span class="badge mock">Demo only</span></div>
+    <p class="sub" style="font-size:13px;margin:6px 0 12px">In a live product this is triggered by a verified death report from two independent people. Here you can trigger it yourself to see exactly what your family would receive.</p>
+    ${S.event? eventBox() : `<button class="btn sec" data-act="sim" ${S.assets.length?'':'disabled'}>Run the disclosure simulation</button>`}
+  </div>`;
+};
+
+function ringSvg(pct){
+  const R=44,C=2*Math.PI*R;
+  return `<div class="ring"><svg width="104" height="104" viewBox="0 0 104 104">
+    <circle cx="52" cy="52" r="${R}" stroke="var(--line)" stroke-width="9" fill="none"/>
+    <circle cx="52" cy="52" r="${R}" stroke="var(--blue-deep)" stroke-width="9" fill="none" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+    <div class="num"><b>${pct}</b><span>of 100</span></div></div>`;
+}
+
+function eventBox(){
+  const e=S.event, done=e.stage==='released';
+  return `<div style="border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--blue-tint)">
+    <div class="row" style="margin-bottom:9px"><span style="color:var(--blue-deep)">${ic(done?'check':'clock')}</span>
+      <b style="font-size:13.5px">${done?'Disclosure released':'Waiting period running'}</b><div class="sp"></div>
+      <span class="badge ${done?'ok':'warn'}">${e.reporters}/2 reports</span></div>
+    <p class="sub" style="font-size:12.5px">${done
+      ? 'Your designated people can now see exactly what you scoped for them, and nothing else. Every view is written to the audit log.'
+      : 'Two independent reports have been received. Your own registered contacts have been alerted. If nobody cancels, disclosure releases at the end of the waiting period.'}</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      ${done?`<button class="btn sm" data-act="inbox">See what your family receives</button>`
+           :`<button class="btn sm" data-act="release">Skip the wait and release</button>`}
+      <button class="btn sec sm" data-act="cancel-event">Cancel the event</button></div></div>`;
+}
+
+views['r-assets'] = () => `
+  <div class="row" style="margin-bottom:14px"><h1 style="flex:1">Holdings</h1>
+    <button class="btn" data-act="add-asset">${ic('plus',15)} Add</button></div>
+  ${S.assets.length? `<div class="card">${S.assets.map(a=>{
+      const ls=S.links.filter(l=>l.asset===a.id);
+      return `<div class="item"><div class="ico">${ic(a.type==='bank'?'bank':a.type==='epf'?'shield':a.type==='demat'?'chart':'file')}</div>
+      <div class="bd"><div class="t">${esc(a.inst)}</div>
+        <div class="s">${TYPE_LABEL[a.type]||a.type}${a.ref?' &middot; '+esc(a.ref):' &middot; no identifier recorded'}</div>
+        <div class="chips">
+          ${a.nomAtInst==='yes'?'<span class="badge ok">Nominated at institution</span>':a.nomAtInst==='no'?'<span class="badge bad">No nomination registered</span>':'<span class="badge warn">Nomination status unknown</span>'}
+          ${ls.length? ls.map(l=>{const p=S.people.find(p=>p.id===l.person);return `<span class="badge">${esc(p?p.name:'?')} &middot; ${esc(l.scope)}</span>`}).join('') : '<span class="badge bad">No nominee designated</span>'}
+        </div></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn sec sm" data-link="${a.id}">Designate</button>
+        <button class="btn sec sm" data-del-a="${a.id}" style="color:var(--clay)">Remove</button></div></div>`}).join('')}</div>`
+    : `<div class="card"><div class="empty"><h3>No holdings yet</h3><p class="sub">Add one, or load the sample registry to look around.</p>
+       <div style="margin-top:14px;display:flex;gap:8px;justify-content:center"><button class="btn" data-act="add-asset">Add a holding</button><button class="btn sec" data-act="seed">Load sample data</button></div></div></div>`}
+  <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+   <div><b>No balances, by design.</b> Balances go stale the day you enter them, and a list of what you own with amounts attached is a target. Amanat records only where a holding is and who should be told.</div></div>`;
+
+views['r-people'] = () => `
+  <div class="row" style="margin-bottom:14px"><h1 style="flex:1">People</h1>
+    <button class="btn" data-act="add-person">${ic('plus',15)} Add</button></div>
+  ${S.people.length? `<div class="card">${S.people.map(p=>{
+    const n=S.links.filter(l=>l.person===p.id).length;
+    return `<div class="item"><div class="ico">${ic('users')}</div><div class="bd">
+      <div class="t">${esc(p.name)}</div><div class="s">${esc(p.rel)}${p.phone?' &middot; '+esc(p.phone):''}</div>
+      <div class="chips"><span class="badge ${n?'':'bad'}">${n?n+' holding'+(n>1?'s':''):'Not designated anywhere'}</span>${n?'<span class="badge mock">Told they\u2019re named</span>':''}${n&&!p.phone?'<span class="badge warn">Add a mobile so they can find you</span>':''}
+      ${S.reporters.includes(p.id)?'<span class="badge ok">Can report a death</span>':''}</div></div>
+      <button class="btn sec sm" data-del-p="${p.id}" style="color:var(--clay)">Remove</button></div>`}).join('')}</div>`
+  : `<div class="card"><div class="empty"><h3>Nobody added yet</h3><p class="sub">Add the people who should learn about your holdings.</p>
+     <div style="margin-top:14px"><button class="btn" data-act="add-person">Add a person</button></div></div></div>`}
+  <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+   <div><b>A nominee is a custodian, not an owner.</b> Under Indian law a nominee receives the asset and holds it for the legal heirs. Amanat records who should be <em>told</em>; who ultimately inherits is decided by succession law or your will.</div></div>`;
+
+views['r-safeguards'] = () => `
+  <h1>Safeguards</h1>
+  <p class="sub" style="margin:6px 0 16px;max-width:560px">A system that reveals a dead person&rsquo;s assets to whoever asks is a fraud instrument. These are the controls that stop that, and the cost each one carries.</p>
+  <div class="card"><h3>Who may report your death</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">Disclosure needs <b>two independent reports</b>. One person acting alone can never trigger it.</p>
+    ${S.people.length? S.people.map(p=>`<label class="row" style="padding:9px 0;border-bottom:1px solid var(--line-soft);cursor:pointer">
+      <input type="checkbox" data-rep="${p.id}" ${S.reporters.includes(p.id)?'checked':''} style="accent-color:var(--blue-deep);width:16px;height:16px">
+      <div style="flex:1"><div style="font-weight:600;font-size:13.5px">${esc(p.name)}</div><div class="tiny">${esc(p.rel)}</div></div></label>`).join('')
+      : '<p class="tiny">Add people first, then choose who may report.</p>'}
+    <div class="row" style="margin-top:11px"><span class="badge ${S.reporters.length>=2?'ok':'warn'}">${S.reporters.length} of 2 set</span></div>
+  </div>
+  <div class="card"><h3>The controls, and what each costs</h3>
+    <div class="scroll-x"><table><thead><tr><th>Control</th><th>Stops</th><th>Cost</th></tr></thead><tbody>
+      <tr><td><b>Two independent reporters</b></td><td>Someone reporting a living person dead</td><td>Slows a genuine case</td></tr>
+      <tr><td><b>Waiting period</b></td><td>The same, with a window to cancel</td><td>Delay at the worst moment</td></tr>
+      <tr><td><b>Alert to your own contacts</b></td><td>A silent false report</td><td>None</td></tr>
+      <tr><td><b>Scope per person per holding</b></td><td>An excluded relative seeing everything</td><td>More setup for you</td></tr>
+      <tr><td><b>No balances stored</b></td><td>Making the registry worth stealing</td><td>Less immediately useful</td></tr>
+      <tr><td><b>Append-only audit log</b></td><td>Quiet misuse by anyone, us included</td><td>None</td></tr>
+    </tbody></table></div>
+    <div class="note warn" style="margin-top:12px"><span style="flex-shrink:0">${ic('alert',16)}</span>
+      <div><b>The tension that cannot be designed away.</b> Every control that protects you while alive delays your family afterwards. We bias toward protection: a wrongly disclosed asset map cannot be un-disclosed, a delayed one can still be claimed.</div></div>
+  </div>
+  <div class="card"><div class="row"><h3 style="flex:1">Audit log</h3><span class="badge mock">Append-only</span></div>
+    ${S.log.length? `<div style="margin-top:6px">${S.log.slice(0,12).map(l=>`<div class="item" style="padding:8px 0">
+      <div class="bd"><div class="s" style="color:var(--ink-2)">${esc(l.what)}</div>
+      <div class="tiny">${new Date(l.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('')}</div>`
+    : '<p class="tiny" style="margin-top:6px">Nothing recorded yet.</p>'}
+  </div>`;
+
+views['r-inbox'] = () => {
+  const p=S.people[0];
+  return `<button class="btn sec sm" data-v="r-home" style="margin-bottom:14px">${ic('back',14)} Back</button>
+  <div class="eyebrow">What your family receives</div>
+  <h1>${esc(p?p.name:'Your nominee')}&rsquo;s view</h1>
+  <p class="sub" style="margin:6px 0 16px">This is the whole of what this person can see. Scope is applied per holding &mdash; anything not designated to them does not appear at all.</p>
+  ${S.people.map(per=>{
+    const ls=S.links.filter(l=>l.person===per.id);
+    if(!ls.length) return '';
+    return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="ico" style="width:32px;height:32px;border-radius:8px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center">${ic('users',16)}</div>
+      <div><b style="font-size:14px">${esc(per.name)}</b><div class="tiny">${esc(per.rel)} &middot; sees ${ls.length} of ${S.assets.length} holdings</div></div></div>
+      ${ls.map(l=>{const a=S.assets.find(a=>a.id===l.asset); if(!a) return ''; const po=TYPES.find(t=>t.k===a.type);
+        return `<div class="item"><div class="ico">${ic('bank')}</div><div class="bd">
+          <div class="t">${esc(a.inst)}</div><div class="s">${TYPE_LABEL[a.type]}${a.ref?' &middot; '+esc(a.ref):''}</div>
+          <div class="chips"><span class="badge">${esc(l.scope)}</span>
+          ${a.nomAtInst==='yes'?'<span class="badge ok">Nominated — short claim route</span>':'<span class="badge bad">Not nominated — needs a legal heir certificate</span>'}</div>
+          <div class="tiny" style="margin-top:6px">Next step: ${a.nomAtInst==='yes'?'approach '+esc(a.inst)+' with the death certificate and your KYC.':'obtain a legal heir certificate, then approach '+esc(a.inst)+'. Search '+(po?po.portal:'the relevant portal')+' if the holding has already been classified unclaimed.'}</div>
+        </div></div>`}).join('')}</div>`}).join('')||'<div class="card"><div class="empty"><h3>Nothing designated</h3><p class="sub">Designate at least one holding to a person to see this view.</p></div></div>'}`;
+};
+
+/* ===== RECOVERY ===== */
+views['v-intake'] = () => {
+  const i=S.step, q=Q[i];
+  if(i>=Q.length) { S.leads=mergeLeads(buildLeads()); if(S.lookup&&S.lookup.status==='named') S.lookup.extended=true; S.view='v-plan'; logit('Search plan generated'); save(); return views['v-plan'](); }
+  const val=S.intake[q.id]||'';
+  return `<div style="max-width:520px;margin:0 auto">
+    <div class="steps">${Q.map((_,n)=>`<i class="${n<i?'done':n===i?'on':''}"></i>`).join('')}</div>
+    <div class="tiny" style="margin-bottom:14px">Question ${i+1} of ${Q.length}</div>
+    <h1 style="font-size:25px">${q.t}</h1>
+    <p class="sub" style="margin:9px 0 18px">${q.s}</p>
+    ${q.f==='text'
+      ? `<div class="field"><input id="qin" value="${esc(val)}" placeholder="${esc(q.ph||'')}" autocomplete="off"></div>`
+      : `<div style="display:flex;flex-direction:column;gap:7px">${q.opts.map(o=>
+         `<button class="btn sec" data-opt="${esc(o)}" style="justify-content:flex-start;padding:12px 14px;${val===o?'border-color:var(--blue);background:var(--blue-tint)':''}">${esc(o)}</button>`).join('')}</div>`}
+    <div style="display:flex;gap:9px;margin-top:20px">
+      ${i>0?`<button class="btn sec" data-act="q-back">Back</button>`:''}
+      <div class="sp"></div>
+      <button class="btn sec" data-act="q-skip">Skip</button>
+      ${q.f==='text'?`<button class="btn" data-act="q-next">Continue</button>`:''}
+    </div>
+    <div class="note" style="margin-top:22px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+      <div>Answer what you can. <b>&ldquo;I don&rsquo;t know&rdquo; is a useful answer</b> &mdash; it tells us to search anyway rather than skip a whole category.</div></div>
+  </div>`;
+};
+
+views['v-plan'] = () => {
+  if(!S.leads.length) return lookupView();
+
+  const f=S.filter, list=f==='all'?S.leads:S.leads.filter(l=>l.status===f);
+  const n=k=>S.leads.filter(l=>l.status===k).length;
+  return `<div class="row" style="margin-bottom:4px"><h1 style="flex:1">Search plan</h1>
+    <button class="btn sec sm" data-act="redo-q">Redo interview</button></div>
+  <p class="sub" style="margin-bottom:4px">${S.intake.name?'For '+esc(S.intake.name)+' &middot; ':''}${S.leads.every(l=>l.fromReg)?S.leads.length+' holdings from their registry.':S.leads.length+' places to look, most promising first.'}</p>
+  ${regBlock()}
+  <div class="pipe">
+    <button data-f="all" aria-pressed="${f==='all'}"><b>${S.leads.length}</b><span>All</span></button>
+    <button data-f="todo" aria-pressed="${f==='todo'}"><b>${n('todo')}</b><span>To check</span></button>
+    <button data-f="found" aria-pressed="${f==='found'}"><b>${n('found')}</b><span>Found</span></button>
+    <button data-f="filed" aria-pressed="${f==='filed'}"><b>${n('filed')}</b><span>Claim filed</span></button>
+    <button data-f="settled" aria-pressed="${f==='settled'}"><b>${n('settled')}</b><span>Settled</span></button>
+    <button data-f="none" aria-pressed="${f==='none'}"><b>${n('none')}</b><span>Nothing there</span></button>
+  </div>
+  ${list.map(l=>leadCard(l)).join('')||'<div class="card"><div class="empty"><p class="sub">Nothing in this stage.</p></div></div>'}`;
+};
+
+function leadCard(l){
+  const p=PORTAL_OF(l.portal);
+  const where = l.fromReg ? l.label+' \u2014 claim directly' : l.portal==='tax'?'Tax records (AIS and Form 26AS)':l.portal==='email'?'Their email inbox':p?p.n:l.portal;
+  const sev = l.score>=90?'':l.score>=70?'warn':'mock';
+  return `<div class="lead-card"><div class="hd">
+    <div class="ico" style="width:32px;height:32px;border-radius:8px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      ${ic(l.portal==='tax'?'tax':l.portal==='email'?'mail':l.portal==='epfo'?'shield':l.portal==='iepf'?'chart':'bank',16)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="row" style="gap:7px;flex-wrap:wrap"><b style="font-size:13.5px">${esc(l.label)}</b>
+        ${l.fromReg?'<span class="badge ok">From their registry</span>'+(l.nomAtInst==='yes'?'<span class="badge">Short claim route</span>':'<span class="badge bad">Needs legal heir certificate</span>'):`<span class="badge ${sev}">${l.score>=90?'Strong lead':l.score>=70?'Worth checking':'Long shot'}</span>`}</div>
+      <div class="s sub" style="font-size:12.5px;margin-top:2px">${esc(l.why)}</div>
+      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">
+        <span class="tiny">Where: <b style="color:var(--ink-2)">${esc(where)}</b></span>
+        ${l.ref?`<span class="tiny">Ref: <b class="mono" style="color:var(--ink-2)">${esc(l.ref)}</b></span>`:''}
+      </div></div>
+    <select data-st="${l.id}" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--card)">
+      <option value="todo"${l.status==='todo'?' selected':''}>To check</option>
+      <option value="found"${l.status==='found'?' selected':''}>Found</option>
+      <option value="filed"${l.status==='filed'?' selected':''}>Claim filed</option>
+      <option value="settled"${l.status==='settled'?' selected':''}>Settled</option>
+      <option value="none"${l.status==='none'?' selected':''}>Nothing there</option>
+    </select></div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      ${l.fromReg?`<button class="btn sec sm" data-v="v-case">${ic('file',14)} Documents to claim it</button>`
+       :l.portal==='tax'?`<button class="btn sec sm" data-guide="trace">Open the tax-records route</button>`
+       :l.portal==='email'?`<button class="btn sec sm" data-guide="evidence">Open the search-term kit</button>`
+       :p?`<a class="lk" href="${p.url}" target="_blank" rel="noopener">${ic('ext',13)} Open ${esc(p.n)}</a>
+          <button class="btn sec sm" data-portal="${p.id}">What you need</button>`:''}
+      <button class="btn sec sm" data-ref="${l.id}">${l.ref?'Edit':'Add'} reference</button>
+    </div></div>`;
+}
+
+views['v-guides'] = () => {
+  const t=S.guideTab;
+  return `<h1>Guides</h1>
+  <p class="sub" style="margin:6px 0 14px">The three routes that find holdings no portal search will.</p>
+  <div class="seg" style="margin-bottom:16px;width:fit-content;max-width:100%;overflow-x:auto">
+    <button data-gt="trace" aria-pressed="${t==='trace'}">Tax records</button>
+    <button data-gt="evidence" aria-pressed="${t==='evidence'}">Evidence kit</button>
+    <button data-gt="portals" aria-pressed="${t==='portals'}">Portals</button>
+  </div>
+  ${t==='trace'?guideTrace():t==='evidence'?guideEvidence():guidePortals()}`;
+};
+
+function guideTrace(){
+  const steps=[
+    ['Gather four things','The deceased&rsquo;s PAN, their death certificate, your own PAN, and one legal-heir document &mdash; a legal heir certificate, surviving member certificate, pension order or registered will.'],
+    ['Log in with your own PAN','Go to the income tax e-filing portal and sign in as yourself, not as them.'],
+    ['Open Authorised Partners','Choose <b>Register as Representative Assessee</b>, then <b>Create New Request</b>.'],
+    ['Select the category','Pick <b>Deceased (Legal heir)</b>, enter their details and upload the documents.'],
+    ['Submit and wait for approval','The department reviews the request. This is the slow step — plan for days, not minutes.'],
+    ['Switch your login mode','Once approved, change &ldquo;Logged in as&rdquo; from Self to Legal Heir. You now have access to their records.'],
+    ['Open Form 26AS and the AIS','This is the point of the whole exercise. Read on.']
+  ];
+  return `<div class="card">
+    <div class="row"><span class="badge ok">Strongest route</span></div>
+    <h2 style="margin:9px 0 6px">Reconstruct their holdings from tax records</h2>
+    <p class="sub">Every bank that paid them interest and every company that paid them a dividend had to deduct tax against their PAN and report it. Form 26AS and the Annual Information Statement list those deductors by name. That is an asset map assembled by the Income Tax Department, and almost no family knows it exists.</p>
+    <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+      <div>A legal heir can register as a <b>Representative Assessee</b> and gets full access to the deceased&rsquo;s e-filing account, Form 26AS and AIS included.</div></div>
+  </div>
+  <div class="card"><h3>How to get access</h3>
+    <ol class="ol" style="margin-top:12px">${steps.map(s=>`<li><b>${s[0]}</b><div class="sub" style="font-size:13px;margin-top:2px">${s[1]}</div></li>`).join('')}</ol>
+    <a class="lk" href="https://www.incometax.gov.in/iec/foportal/help/RegisterasLegalHeirUserManual" target="_blank" rel="noopener">${ic('ext',13)} Official step-by-step manual</a>
+  </div>
+  <div class="card"><h3>Turn what you find into leads</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">Read down the deductor column. Every name is an institution that held their money. Add each one here and it joins your case file.</p>
+    ${S.trace.length? `<div class="scroll-x"><table><thead><tr><th>Institution found</th><th>Implies</th><th></th></tr></thead><tbody>
+      ${S.trace.map(t=>`<tr><td><b>${esc(t.name)}</b></td><td class="sub">${esc(t.kind)}</td>
+      <td style="text-align:right"><button class="btn sec sm" data-del-t="${t.id}" style="color:var(--clay)">Remove</button></td></tr>`).join('')}
+    </tbody></table></div>`:'<p class="tiny">Nothing added yet.</p>'}
+    <button class="btn sec sm" data-act="add-trace" style="margin-top:12px">${ic('plus',14)} Add an institution from the AIS</button>
+  </div>
+  <div class="note warn"><span style="flex-shrink:0">${ic('alert',16)}</span>
+    <div><b>What this route will not do.</b> It shows institutions that reported tax against their PAN. A holding that never earned reportable income &mdash; a dormant zero-interest account, an unpaid insurance maturity &mdash; will not appear. Run the portal searches as well.</div></div>`;
+}
+
+function guideEvidence(){
+  return `<div class="card"><h2>The evidence trail</h2>
+    <p class="sub" style="margin-top:5px">Before any portal, search what the family already has. Statements are emailed, premiums leave a footprint in a bank statement, and a drawer of old paper usually names half the institutions you are looking for.</p></div>
+  <div class="card"><h3>Search terms for their email</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">Run each of these in their inbox. Tap to copy.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${EMAIL_TERMS.map(t=>`<button class="cp" data-copy="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+      <div><b>&ldquo;Consolidated Account Statement&rdquo; is the one to run first.</b> NSDL and CDSL email it to registered holders, and it lists mutual fund and demat holdings together against one PAN.</div></div>
+  </div>
+  <div class="card"><h3>Read their bank statement as a map</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 8px">Recurring debits name institutions nobody remembered. Tick what you find.</p>
+    <ul class="ck">${[
+      ['ev1','An insurance premium leaving every year or half-year','Names an insurer and an approximate policy anniversary'],
+      ['ev2','A monthly SIP debit','Names an AMC and a live folio'],
+      ['ev3','An annual locker rent','There is a bank locker, and it has contents'],
+      ['ev4','Interest credited from another bank','A deposit at a bank nobody mentioned'],
+      ['ev5','A dividend credit','They held shares in that company'],
+      ['ev6','A standing instruction to a post office or small savings scheme','NSC, KVP or a recurring deposit']
+    ].map(([id,t,s])=>`<li><input type="checkbox" data-ev="${id}" ${S.evidence[id]?'checked':''}>
+      <div><b>${t}</b><div class="tiny">${s}</div></div></li>`).join('')}</ul></div>
+  <div class="card"><h3>What to look for on paper</h3>
+    <ul class="ck">${[
+      ['ep1','Old passbooks and chequebooks','Even a closed-looking account may hold a forgotten fixed deposit'],
+      ['ep2','Share certificates in physical form','These almost always mean an IEPF entry'],
+      ['ep3','Insurance policy bonds','The policy number is all the insurer needs'],
+      ['ep4','Locker keys without an obvious bank','Worth asking at every branch they banked with'],
+      ['ep5','Old payslips','Carry the EPF member ID, which the EPFO needs'],
+      ['ep6','Previous years&rsquo; ITR acknowledgements','Show which income sources existed and when']
+    ].map(([id,t,s])=>`<li><input type="checkbox" data-ev="${id}" ${S.evidence[id]?'checked':''}>
+      <div><b>${t}</b><div class="tiny">${s}</div></div></li>`).join('')}</ul></div>`;
+}
+
+function guidePortals(){
+  return `<div class="card"><h2>Where to search</h2>
+    <p class="sub" style="margin-top:5px">Five portals, five different authorities, no shared login. The government&rsquo;s own common portal links these but does not search across them &mdash; you still log in separately at each.</p>
+    <a class="lk" style="margin-top:10px" href="https://www.unclaimedassetsportal.in/" target="_blank" rel="noopener">${ic('ext',13)} The government&rsquo;s common landing portal</a></div>
+  ${PORTALS.map(p=>`<div class="card"><div class="row" style="align-items:flex-start">
+    <div style="flex:1"><div class="row" style="gap:8px"><h3>${esc(p.n)}</h3><span class="badge mock">${esc(p.who)}</span></div>
+      <p class="sub" style="font-size:13px;margin-top:4px">${esc(p.what)}</p></div></div>
+    <div class="hr"></div>
+    <div class="grid-2">
+      <div><div class="eyebrow">What you need</div><ul class="ck" style="margin-top:-4px">${p.need.map(n=>`<li style="border:none;padding:4px 0"><span style="color:var(--blue-deep);flex-shrink:0;margin-top:2px">${ic('check',14)}</span><div>${esc(n)}</div></li>`).join('')}</ul></div>
+      <div><div class="eyebrow">What comes back</div><p class="sub" style="font-size:12.5px">${esc(p.out)}</p>
+        <div class="note" style="margin-top:9px;font-size:11.5px">${esc(p.note)}</div></div>
+    </div>
+    <a class="lk" style="margin-top:12px" href="${p.url}" target="_blank" rel="noopener">${ic('ext',13)} Open ${esc(p.n)}</a>
+  </div>`).join('')}`;
+}
+
+views['v-case'] = () => {
+  const act=S.leads.filter(l=>l.status!=='todo'&&l.status!=='none');
+  return `<h1>Case file</h1>
+  <p class="sub" style="margin:6px 0 16px">Everything you have found and where each claim stands. A family typically chases six to nine institutions over several months &mdash; this is the record that stops things being dropped.</p>
+  ${S.leads.length? `<div class="card"><div class="scroll-x"><table>
+    <thead><tr><th>Institution</th><th>Type</th><th>Reference</th><th>Status</th><th>Note</th></tr></thead><tbody>
+    ${S.leads.map(l=>{const p=PORTAL_OF(l.portal);
+      const badge={todo:'mock',found:'warn',filed:'warn',settled:'ok',none:'mock'}[l.status];
+      const label={todo:'To check',found:'Found',filed:'Claim filed',settled:'Settled',none:'Nothing there'}[l.status];
+      return `<tr><td><b>${esc(l.label)}</b><div class="tiny">${p?esc(p.n):l.portal==='tax'?'Tax records':'Email'}</div></td>
+      <td class="sub">${esc(TYPE_LABEL[l.type]||l.type)}</td>
+      <td class="mono">${l.ref?esc(l.ref):'<span class="tiny">—</span>'}</td>
+      <td><span class="badge ${badge}">${label}</span></td>
+      <td><button class="btn sec sm" data-note="${l.id}">${l.note?'Edit':'Add'}</button>${l.note?`<div class="tiny" style="margin-top:4px;max-width:180px">${esc(l.note)}</div>`:''}</td></tr>`}).join('')}
+    </tbody></table></div></div>`
+  : `<div class="card"><div class="empty"><h3>No case open</h3><p class="sub">Run the discovery interview to build a search plan first.</p>
+     <div style="margin-top:14px"><button class="btn" data-v="v-plan">Go to the search plan</button></div></div></div>`}
+  ${act.length?`<div class="card"><h3>Claim packs</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">For each lead you have found, this is the route and the documents that institution will ask for.</p>
+    ${act.map(l=>{const nominee=l.fromReg?l.nomAtInst==='yes':S.intake.nom==='Yes, on at least one holding';
+      return `<div class="item"><div class="ico">${ic('file')}</div><div class="bd">
+      <div class="t">${esc(l.label)}</div>
+      <div class="s">${nominee?'If you are the registered nominee: death certificate plus your KYC is usually enough.':'No nomination: expect a legal heir or succession certificate as well.'}</div>
+      <div class="chips">${(nominee?['death','pan_c','relation']:['death','pan_c','heir','indem','relation']).map(d=>{
+        const doc=DOCS.find(x=>x.id===d); return `<span class="badge ${S.docs[d]?'ok':'bad'}">${S.docs[d]?'✓ ':''}${esc(doc.n)}</span>`}).join('')}</div>
+      </div></div>`}).join('')}
+    <div class="note warn" style="margin-top:10px"><span style="flex-shrink:0">${ic('alert',16)}</span>
+      <div>Thresholds vary by institution and by amount. Many banks waive the succession certificate below a limit they set themselves &mdash; always ask before paying for one.</div></div>
+  </div>`:''}`;
+};
+
+views['v-docs'] = () => {
+  const have=Object.values(S.docs).filter(Boolean).length;
+  return `<h1>Documents</h1>
+  <p class="sub" style="margin:6px 0 14px">Gather these once. Every institution asks for the same handful, and the two hard ones take the longest &mdash; start them early.</p>
+  <div class="card"><div class="row" style="margin-bottom:10px"><b style="font-size:13.5px">${have} of ${DOCS.length} in hand</b><div class="sp"></div>
+    <div style="width:110px;height:6px;background:var(--line);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.round(have/DOCS.length*100)}%;background:var(--blue)"></div></div></div>
+    <ul class="ck">${DOCS.map(d=>`<li><input type="checkbox" data-doc="${d.id}" ${S.docs[d.id]?'checked':''}>
+      <div style="flex:1"><div class="row" style="gap:7px"><b>${esc(d.n)}</b>${d.hard?'<span class="badge warn">Slow to obtain</span>':''}</div>
+      <div class="tiny">${d.why}</div></div></li>`).join('')}</ul></div>
+  <div class="note"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+    <div><b>Get eight to ten certified copies of the death certificate.</b> Every institution keeps one and none of them return it. This is the most common avoidable delay families hit.</div></div>
+  <div class="card"><h3>Nominee or legal heir &mdash; which route are you on?</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">This single fact changes how hard every claim will be.</p>
+    <div class="grid-2">
+      <div style="border:1px solid var(--line);border-radius:var(--r);padding:13px">
+        <span class="badge ok">Registered nominee</span>
+        <p class="sub" style="font-size:12.5px;margin-top:8px">A death certificate and your KYC is often the whole requirement. SEBI&rsquo;s 2025 rules cut securities transmission to exactly this.</p>
+        <p class="tiny" style="margin-top:7px">You receive the asset as custodian, and hold it for the legal heirs.</p></div>
+      <div style="border:1px solid var(--line);border-radius:var(--r);padding:13px">
+        <span class="badge bad">No nomination</span>
+        <p class="sub" style="font-size:12.5px;margin-top:8px">Expect a legal heir certificate from the local revenue authority, and above the institution&rsquo;s threshold a succession certificate from a court.</p>
+        <p class="tiny" style="margin-top:7px">Other heirs will usually be asked to consent in writing.</p></div>
+    </div></div>`;
+};
+
+/* ===== lookup: did they use Amanat? ===== */
+const maskPan = p => p ? p.slice(0,2)+'•••••'+p.slice(-3) : '';
+const digits10 = s => String(s||'').replace(/\D/g,'').slice(-10);
+const REL_MAP = {Spouse:'Spouse',Son:'Son or daughter',Daughter:'Son or daughter',Mother:'Parent',Father:'Parent',Brother:'Sibling',Sister:'Sibling','Lawyer or executor':'Executor or legal representative'};
+
+function doLookup(pan,phone){
+  pan=String(pan||'').trim().toUpperCase(); const ph=digits10(phone);
+  const L={pan,phone,status:'nomatch'};
+  if(S.profile&&S.profile.pan&&S.profile.pan.toUpperCase()===pan&&S.assets.length){
+    const person=ph.length===10?S.people.find(p=>digits10(p.phone)===ph):null;
+    if(person&&S.links.some(l=>l.person===person.id)) Object.assign(L,{status:'named',personId:person.id,holder:S.profile.name,stage:'report'});
+    else Object.assign(L,{status:'notnamed',holder:S.profile.name});
+  }
+  S.lookup=L; logit('Registry lookup: '+L.status); save(); render();
+}
+
+function registryLeads(pid){
+  const portalOf={bank:'udgam',insurance:'bima',mf:'mitra',demat:'iepf',epf:'epfo',post:'post'};
+  return S.links.filter(l=>l.person===pid).map(l=>{
+    const a=S.assets.find(x=>x.id===l.asset); if(!a) return null;
+    return {id:uid(),portal:portalOf[a.type],type:a.type,label:a.inst,score:100,status:'found',note:'',fromReg:true,scope:l.scope,nomAtInst:a.nomAtInst,
+      ref:l.scope==='Full detail'?(a.ref||''):'',
+      why:(a.nomAtInst==='yes'?'Recorded in their registry. A nomination is registered, so the claim route is short.':'Recorded in their registry. No nomination at the institution, so expect a legal heir certificate.')
+        +(l.scope==='Existence only'?' They chose to show you that it exists, not the account details.':l.scope==='Claim guidance only'?' They shared how to claim it, not the account details.':'')};
+  }).filter(Boolean);
+}
+
+function releaseRegistry(){
+  const L=S.lookup, per=S.people.find(p=>p.id===L.personId);
+  S.leads=registryLeads(L.personId);
+  const held=S.leads.map(l=>S.assets.find(a=>a.inst===l.label)||{});
+  const ins=t=>S.leads.some(l=>l.type===t);
+  S.intake={name:L.holder,rel:REL_MAP[per&&per.rel]||'Other relative',
+    nom:S.leads.some(l=>l.nomAtInst==='yes')?'Yes, on at least one holding':'No',pan:'Yes',
+    banks:S.leads.filter(l=>l.type==='bank').map(l=>l.label).join(', ')};
+  if(ins('insurance')) S.intake.ins='Yes';
+  if(ins('demat')) S.intake.shares='Yes, and I have papers';
+  if(ins('post')) S.intake.post='Yes';
+  S.step=0; L.stage='released'; S.filter='all';
+  logit('Registry disclosed to '+(per?per.name:'nominee')+' — '+S.leads.length+' holdings');
+}
+
+function mergeLeads(nw){
+  const reg=S.leads.filter(l=>l.fromReg);
+  if(!reg.length) return nw;
+  const known=new Set(reg.map(l=>l.label.toLowerCase())), types=new Set(reg.map(l=>l.type));
+  nw=nw.filter(l=>!known.has(l.label.toLowerCase())).map(l=>
+    types.has(l.type)&&!/^(Provident fund —|Accounts in)/.test(l.label)
+      ? {...l,why:'They recorded one of these — check for others they didn’t. '+l.why} : l);
+  return [...reg,...nw];
+}
+
+function regBlock(){
+  const reg=S.leads.filter(l=>l.fromReg); if(!reg.length||!S.lookup) return '';
+  const ext=S.lookup.extended;
+  return `<div class="card" style="margin:12px 0 4px;background:var(--blue-tint);border-color:var(--blue-light)">
+    <div class="row" style="align-items:flex-start;gap:12px"><span style="color:var(--ok);flex-shrink:0;margin-top:1px">${ic('check',20)}</span>
+    <div style="flex:1"><b style="font-size:14px">${esc(S.lookup.holder)} recorded ${reg.length} holding${reg.length>1?'s':''} for you</b>
+      <div class="sub" style="font-size:12.5px;margin-top:2px">They are marked found below, with the claim route for each. ${ext?'Your wider search is listed underneath them.':'People rarely record everything they own &mdash; search for what they didn&rsquo;t.'}</div>
+      ${ext?'':`<button class="btn sm" data-act="extend-search" style="margin-top:10px">${ic('search',14)} Search for anything they didn&rsquo;t record</button>`}
+    </div></div></div>`;
+}
+
+function lookupView(){
+  const L=S.lookup||{};
+  const head=`<div class="hero-art">${ILL.recovery}</div><h1>Find what was left behind</h1>`;
+  const fallback=(title,sub)=>`<div class="card"><div class="row" style="align-items:flex-start;gap:14px">
+      <div class="ico" style="width:38px;height:38px;border-radius:10px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic('search',19)}</div>
+      <div style="flex:1"><div class="t" style="font-weight:600">${title}</div><div class="s sub">${sub}</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${L.status?'':'sec'}" data-act="start-q">Start the discovery interview</button>
+      <button class="btn sec" data-act="seed-r">Load a sample case</button></div></div></div></div>`;
+
+  if(!L.status) return head+`
+    <p class="sub" style="margin:8px 0 18px;max-width:580px">First, check whether they kept an Amanat registry. If they did and named you, you&rsquo;ll see what they recorded for you. Either way, we then help you search for everything else.</p>
+    <div class="card"><div class="eyebrow">Step 1</div><h3>Did they use Amanat?</h3>
+      <p class="sub" style="font-size:13px;margin:4px 0 14px">We look up their PAN, then check whether your mobile number belongs to someone they named.</p>
+      <div class="grid-2"><div class="field"><label>Their PAN</label><input id="lk-pan" maxlength="10" placeholder="ABCDE1234F" style="text-transform:uppercase" autocomplete="off"></div>
+      <div class="field"><label>Your mobile number</label><input id="lk-phone" placeholder="+91" autocomplete="off"></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="lookup">Check</button>
+      <button class="btn sec" data-act="lookup-sample">Try with the sample family</button></div></div>
+    ${fallback('They didn&rsquo;t use Amanat, or you&rsquo;re not sure','Skip straight to the discovery interview. We turn your answers into a ranked list of places to look.')}
+    <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('lock',16)}</span>
+      <div><b>A registry is never shown to someone its owner didn&rsquo;t name.</b> If they named you, you were told when they did it &mdash; though not what they hold.</div></div>`;
+
+  const retry=`<button class="btn sec sm" data-act="lookup-reset">Try a different PAN or number</button>`;
+
+  if(L.status==='nomatch') return head+`
+    <div class="card" style="margin-top:14px"><h3>No Amanat registry for this PAN</h3>
+      <p class="sub" style="font-size:13px;margin:5px 0 12px">That is the common case, and it doesn&rsquo;t mean nothing is out there. Most families start here.</p>${retry}</div>
+    ${fallback('Search for what they held','Answer what you know about them. We build a ranked search plan, including the tax-records route.')}`;
+
+  if(L.status==='notnamed') return head+`
+    <div class="card" style="margin-top:14px"><h3>${esc(L.holder)} kept a registry, but this number isn&rsquo;t one they named</h3>
+      <p class="sub" style="font-size:13px;margin:5px 0 12px">We can&rsquo;t show it to you. The people they named can see their part of it &mdash; it may be worth asking within the family. You can still search for everything yourself.</p>${retry}</div>
+    ${fallback('Search independently','The discovery interview and the tax-records route work without the registry.')}`;
+
+  const per=S.people.find(p=>p.id===L.personId)||{name:'You',rel:''};
+  const others=S.reporters.filter(r=>r!==per.id).map(r=>S.people.find(p=>p.id===r)).filter(Boolean);
+  const second=others[0];
+  const intro=`<div class="card" style="margin-top:14px;background:var(--blue-tint);border-color:var(--blue-light)">
+      <div class="row" style="gap:12px"><span style="color:var(--blue-deep)">${ic('shield',22)}</span>
+      <div style="flex:1"><b style="font-size:14.5px">${esc(L.holder)} named you</b><div class="tiny">${esc(per.name)}${per.rel?' &middot; '+esc(per.rel):''}</div></div>
+      <button class="btn sec sm" data-act="lookup-reset">Not you?</button></div></div>`;
+
+  if(L.stage==='report') return head+intro+`
+    <div class="card"><div class="eyebrow">Step 2</div><h3>Report their death</h3>
+      <p class="sub" style="font-size:13px;margin:4px 0 12px">Nothing in the registry is shown until two people they chose have reported it. This protects them from a false report while they are alive.</p>
+      <div class="field"><label>Death certificate</label><input type="file" id="lk-file" accept="image/*,.pdf">
+        <div class="hint">Simulated here. In a live product this is checked against the issuing registrar.</div></div>
+      <label class="row" style="cursor:pointer;margin:4px 0 14px;font-size:13px"><input type="checkbox" id="lk-cert" style="accent-color:var(--blue-deep);width:16px;height:16px"> I have their death certificate and I am reporting in good faith</label>
+      <button class="btn" data-act="report-death">Submit my report</button>
+      <span class="badge mock" style="margin-left:8px">Simulated</span></div>`;
+
+  if(L.stage==='waiting') return head+intro+`
+    <div class="card"><div class="eyebrow">Step 2</div><h3>Waiting for a second report</h3>
+      <ul class="ck" style="margin:8px 0 12px">
+        <li><span style="color:var(--ok)">${ic('check',16)}</span><div><b>${esc(per.name)}</b> &mdash; reported<div class="tiny">You</div></div></li>
+        <li><span style="color:${L.second?'var(--ok)':'var(--faint)'}">${ic(L.second?'check':'clock',16)}</span><div><b>${esc(second?second.name:'A second person they chose')}</b> &mdash; ${L.second?'reported':'not yet'}<div class="tiny">${second?esc(second.rel):''}</div></div></li>
+      </ul>
+      <p class="sub" style="font-size:12.5px;margin-bottom:12px">${L.second?'Both reports are in. Their registered contacts have been alerted; if nobody cancels during the waiting period, the record opens.':'We have let them know. You don&rsquo;t need to do anything else for now.'}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${L.second
+        ?`<button class="btn" data-act="release-reg">Skip the waiting period and open the record</button>`
+        :`<button class="btn sec" data-act="second-report">Simulate ${esc(second?second.name:'the second')}&rsquo;s report</button>`}
+        <span class="badge mock" style="align-self:center">Demo</span></div></div>`;
+  return head;
+}
+
+/* ============================ modals ============================ */
+function modal(html){ document.getElementById('modal').innerHTML = html?`<div class="scrim" data-close>${html}</div>`:''; }
+function closeModal(){ modal(''); }
+
+function mAsset(){
+  return `<div class="sheet"><h2>Add a holding</h2><p class="sub" style="margin-bottom:16px">Where it is, not what it is worth.</p>
+    <div class="field"><label>Type</label><select id="f-type">${TYPES.map(t=>`<option value="${t.k}">${t.t}</option>`).join('')}</select></div>
+    <div class="field"><label>Institution</label><select id="f-inst">${INST.bank.map(i=>`<option>${i}</option>`).join('')}</select></div>
+    <div class="field"><label>Identifier <span style="font-weight:400;color:var(--faint)">optional</span></label>
+      <input id="f-ref" placeholder="Account, folio or policy number"><div class="hint">Partial is fine. &ldquo;LIC, number unknown&rdquo; still beats nothing.</div></div>
+    <div class="field"><label>Is a nomination registered at the institution?</label>
+      <select id="f-nom"><option value="unknown">I don&rsquo;t know</option><option value="yes">Yes</option><option value="no">No</option></select>
+      <div class="hint">This is the field that decides whether your family needs a succession certificate.</div></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="asset">Add holding</button></div></div>`;
+}
+function mProfile(){
+  return `<div class="sheet"><h2>Your details</h2><p class="sub" style="margin-bottom:16px">This is how the people you name find your registry after your death. Nobody you haven&rsquo;t named can see it.</p>
+    <div class="field"><label>Full name, as on your PAN</label><input id="pf-name" value="${esc(S.profile.name||'')}"></div>
+    <div class="field"><label>PAN</label><input id="pf-pan" maxlength="10" style="text-transform:uppercase" value="${esc(S.profile.pan||'')}" placeholder="ABCDE1234F">
+      <div class="hint">In a live product this is verified against the Income Tax Department&rsquo;s records.</div></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="profile">Save</button></div></div>`;
+}
+function mPerson(){
+  return `<div class="sheet"><h2>Add a person</h2><p class="sub" style="margin-bottom:16px">Someone who should learn about your holdings.</p>
+    <div class="field"><label>Name</label><input id="p-name" placeholder="Full name"></div>
+    <div class="field"><label>Relationship</label><select id="p-rel">${['Spouse','Son','Daughter','Mother','Father','Brother','Sister','Other relative','Friend','Lawyer or executor'].map(r=>`<option>${r}</option>`).join('')}</select></div>
+    <div class="field"><label>Mobile number</label><input id="p-phone" placeholder="+91"><div class="hint">This is how they identify themselves when they look up your registry.</div></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="person">Add person</button></div></div>`;
+}
+function mLink(aid){
+  const a=S.assets.find(x=>x.id===aid);
+  if(!S.people.length) return `<div class="sheet"><h2>Add a person first</h2>
+    <p class="sub" style="margin:6px 0 16px">You need at least one person before you can designate a holding.</p>
+    <div class="act"><button class="btn sec" data-close-btn>Close</button><button class="btn" data-act="add-person">Add a person</button></div></div>`;
+  return `<div class="sheet"><h2>Designate ${esc(a.inst)}</h2>
+    <p class="sub" style="margin-bottom:16px">Who should learn this exists, and how much should they see?</p>
+    ${S.people.map(p=>{const ex=S.links.find(l=>l.asset===aid&&l.person===p.id);
+      return `<div style="border:1px solid ${ex?'var(--blue)':'var(--line)'};border-radius:var(--r);padding:12px;margin-bottom:9px;background:${ex?'var(--blue-tint)':'var(--card)'}">
+      <label class="row" style="cursor:pointer"><input type="checkbox" data-lk="${p.id}" ${ex?'checked':''} style="accent-color:var(--blue-deep);width:16px;height:16px">
+        <div style="flex:1"><b style="font-size:13.5px">${esc(p.name)}</b><div class="tiny">${esc(p.rel)}</div></div></label>
+      <div style="margin-top:9px"><select data-sc="${p.id}" style="width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;background:var(--card)">
+        ${['Full detail','Existence only','Claim guidance only'].map(s=>`<option ${ex&&ex.scope===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`}).join('')}
+    <div class="note" style="margin-top:4px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
+      <div><b>Existence only</b> tells them the holding is there without the identifier &mdash; useful for someone who should know but should not act.</div></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="link" data-aid="${aid}">Save</button></div></div>`;
+}
+function mText(title,sub,label,value,act,id){
+  return `<div class="sheet"><h2>${esc(title)}</h2><p class="sub" style="margin-bottom:16px">${sub}</p>
+    <div class="field"><label>${esc(label)}</label><input id="t-val" value="${esc(value||'')}"></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="${act}" data-id="${esc(id||'')}">Save</button></div></div>`;
+}
+function mTrace(){
+  return `<div class="sheet"><h2>Add from the AIS</h2>
+    <p class="sub" style="margin-bottom:16px">Copy the deductor name exactly as the statement shows it.</p>
+    <div class="field"><label>Institution name</label><input id="tr-name" placeholder="e.g. State Bank of India"></div>
+    <div class="field"><label>What the entry was</label><select id="tr-kind">
+      <option>Interest paid — implies a deposit account</option>
+      <option>Dividend paid — implies a shareholding</option>
+      <option>Rent received — implies a property</option>
+      <option>Professional income — implies a business relationship</option>
+      <option>Not sure</option></select></div>
+    <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="trace">Add and create a lead</button></div></div>`;
+}
+function mPortal(pid){
+  const p=PORTAL_OF(pid);
+  return `<div class="sheet"><div class="row" style="gap:8px"><h2>${esc(p.n)}</h2><span class="badge mock">${esc(p.who)}</span></div>
+    <p class="sub" style="margin:6px 0 14px">${esc(p.what)}</p>
+    <div class="eyebrow">What you need</div>
+    <ul class="ck" style="margin-bottom:12px">${p.need.map(n=>`<li style="border:none;padding:4px 0"><span style="color:var(--blue-deep);flex-shrink:0;margin-top:2px">${ic('check',14)}</span><div>${esc(n)}</div></li>`).join('')}</ul>
+    <div class="eyebrow">What comes back</div><p class="sub" style="font-size:13px">${esc(p.out)}</p>
+    <div class="note" style="margin-top:12px">${esc(p.note)}</div>
+    <div class="act"><button class="btn sec" data-close-btn>Close</button><a class="btn" href="${p.url}" target="_blank" rel="noopener" style="text-decoration:none">${ic('ext',14)} Open ${esc(p.n)}</a></div></div>`;
+}
+
+/* ============================ seeds ============================ */
+function seedRegistry(){
+  const p1={id:uid(),name:'Sunita Sharma',rel:'Spouse',phone:'+91 98200 11223'};
+  const p2={id:uid(),name:'Arjun Sharma',rel:'Son',phone:'+91 99300 44556'};
+  const p3={id:uid(),name:'Meera Sharma',rel:'Daughter',phone:''};
+  S.people=[p1,p2,p3];
+  const a=[
+    {id:uid(),type:'bank',inst:'HDFC Bank',ref:'XXXX 4417 — salary account',nomAtInst:'yes'},
+    {id:uid(),type:'bank',inst:'State Bank of India',ref:'FD, Nagpur branch',nomAtInst:'no'},
+    {id:uid(),type:'insurance',inst:'LIC of India',ref:'Policy 892… (number incomplete)',nomAtInst:'yes'},
+    {id:uid(),type:'mf',inst:'Nippon India MF',ref:'Folio 10294417',nomAtInst:'unknown'},
+    {id:uid(),type:'demat',inst:'Zerodha',ref:'DP ID 1208…',nomAtInst:'yes'},
+    {id:uid(),type:'epf',inst:'EPFO',ref:'UAN 1002 3344 5566',nomAtInst:'no'},
+    {id:uid(),type:'post',inst:'India Post',ref:'NSC, bought 2016',nomAtInst:'unknown'}
+  ];
+  S.assets=a;
+  S.links=[
+    {id:uid(),asset:a[0].id,person:p1.id,scope:'Full detail'},
+    {id:uid(),asset:a[1].id,person:p1.id,scope:'Full detail'},
+    {id:uid(),asset:a[2].id,person:p1.id,scope:'Full detail'},
+    {id:uid(),asset:a[2].id,person:p3.id,scope:'Existence only'},
+    {id:uid(),asset:a[4].id,person:p2.id,scope:'Full detail'},
+    {id:uid(),asset:a[5].id,person:p1.id,scope:'Claim guidance only'},
+    {id:uid(),asset:a[0].id,person:p2.id,scope:'Full detail'},
+    {id:uid(),asset:a[2].id,person:p2.id,scope:'Existence only'},
+    {id:uid(),asset:a[5].id,person:p2.id,scope:'Claim guidance only'}
+  ];
+  S.reporters=[p1.id,p2.id];
+  S.profile={name:'Ramesh Kumar Sharma',pan:'ABCPS1234K'};
+  logit('Sample registry loaded');
+}
+function seedRecovery(){
+  S.intake={name:'Ramesh Kumar Sharma',rel:'Son or daughter',nom:'I don’t know',pan:'Yes',
+    emp:'Bharat Heavy Electricals, Kirloskar Brothers',cities:'Nagpur, Pune',banks:'State Bank of India, Bank of Baroda',
+    ins:'Yes',shares:'Yes, but I have no papers',post:'I don’t know',email:'Yes, email'};
+  S.step=Q.length; S.leads=buildLeads();
+  S.docs={death:true,pan_d:true,pan_c:true,relation:true};
+  if(S.leads[0]) S.leads[0].status='found';
+  logit('Sample case loaded');
+}
+
+/* ============================ events ============================ */
+function bind(){
+  const q=(s,f)=>el.querySelectorAll(s).forEach(f);
+  const mq=(s,f)=>document.getElementById('modal').querySelectorAll(s).forEach(f);
+
+  q('[data-dev]',b=>b.onclick=()=>{S.device=b.dataset.dev;render()});
+  q('[data-j]',b=>b.onclick=()=>{S.journey=b.dataset.j;S.view=NAV[S.journey][0].v;
+    if(S.journey==='recovery'&&!S.leads.length)S.view='v-plan';logit('Opened '+b.dataset.j);save();render()});
+  q('[data-go="chooser"]',b=>b.onclick=()=>{S.journey=null;S.view=null;save();render()});
+  q('[data-v]',b=>b.onclick=()=>{S.view=b.dataset.v;render()});
+  q('[data-gap]',b=>b.onclick=()=>gaps()[+b.dataset.gap].go());
+  q('[data-f]',b=>b.onclick=()=>{S.filter=b.dataset.f;render()});
+  q('[data-gt]',b=>b.onclick=()=>{S.guideTab=b.dataset.gt;render()});
+  q('[data-guide]',b=>b.onclick=()=>{S.guideTab=b.dataset.guide;S.view='v-guides';render()});
+  q('[data-portal]',b=>b.onclick=()=>{modal(mPortal(b.dataset.portal));bindModal()});
+  q('[data-copy]',b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy).then(()=>toast('Copied')).catch(()=>toast('Copy blocked'))});
+
+  q('[data-act]',b=>b.onclick=()=>{
+    const a=b.dataset.act;
+    if(a==='add-asset'){modal(mAsset());bindModal()}
+    else if(a==='add-person'){modal(mPerson());bindModal()}
+    else if(a==='add-trace'){modal(mTrace());bindModal()}
+    else if(a==='seed'){seedRegistry();save();render();toast('Sample registry loaded')}
+    else if(a==='seed-r'){seedRecovery();save();render();toast('Sample case loaded')}
+    else if(a==='start-q'){S.step=0;S.view='v-intake';render()}
+    else if(a==='redo-q'){S.step=0;S.view='v-intake';render()}
+    else if(a==='q-back'){S.step=Math.max(0,S.step-1);render()}
+    else if(a==='q-skip'){S.step++;save();render()}
+    else if(a==='q-next'){const i=el.querySelector('#qin');if(i)S.intake[Q[S.step].id]=i.value.trim();S.step++;save();render()}
+    else if(a==='sim'){S.event={stage:'waiting',reporters:2,at:Date.now()};logit('Death event simulated — 2 reports received, waiting period started');save();render();toast('Waiting period started')}
+    else if(a==='release'){S.event.stage='released';logit('Disclosure released to designated people');save();render();toast('Disclosure released')}
+    else if(a==='cancel-event'){S.event=null;logit('Death event cancelled');save();render();toast('Event cancelled')}
+    else if(a==='profile'){modal(mProfile());bindModal()}
+    else if(a==='lookup'){const p=el.querySelector('#lk-pan').value,ph=el.querySelector('#lk-phone').value;
+      if(!/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/.test(p.trim())){toast('Enter a valid PAN');return}
+      if(digits10(ph).length!==10){toast('Enter a 10-digit mobile number');return}
+      doLookup(p,ph)}
+    else if(a==='lookup-sample'){
+      if(!S.assets.length) seedRegistry();
+      if(!(S.profile&&S.profile.pan)){toast('Add your PAN in Protect first');return}
+      const linked=S.people.filter(p=>p.phone&&S.links.some(l=>l.person===p.id));
+      const pick=linked.find(p=>/Son|Daughter/.test(p.rel))||linked[0];
+      if(!pick){toast('Name someone with a mobile number in Protect first');return}
+      doLookup(S.profile.pan,pick.phone)}
+    else if(a==='lookup-reset'){S.lookup=null;save();render()}
+    else if(a==='report-death'){const c=el.querySelector('#lk-cert');
+      if(!c||!c.checked){toast('Confirm you have the death certificate');return}
+      S.lookup.stage='waiting';logit('Death reported by nominee');save();render();toast('Report received')}
+    else if(a==='second-report'){S.lookup.second=true;logit('Second death report received');save();render()}
+    else if(a==='release-reg'){releaseRegistry();save();render();toast('Record opened')}
+    else if(a==='extend-search'){S.step=0;S.view='v-intake';render()}
+    else if(a==='inbox'){S.view='r-inbox';logit('Nominee view opened');save();render()}
+    else if(a==='reset'){if(S.assets.length||S.leads.length){modal(`<div class="sheet"><h2>Reset the prototype?</h2>
+      <p class="sub" style="margin:6px 0 2px">This clears everything you have entered in both journeys. It cannot be undone.</p>
+      <div class="act"><button class="btn sec" data-close-btn>Keep it</button><button class="btn" data-save="reset" style="background:var(--clay)">Reset everything</button></div></div>`);bindModal()}
+      else toast('Nothing to reset')}
+  });
+
+  q('[data-link]',b=>b.onclick=()=>{modal(mLink(b.dataset.link));bindModal()});
+  q('[data-ref]',b=>{const l=S.leads.find(x=>x.id===b.dataset.ref);
+    b.onclick=()=>{modal(mText('Reference number','UDRN, folio, policy or member ID — whatever the search gave you.','Reference',l.ref,'ref',l.id));bindModal()}});
+  q('[data-note]',b=>{const l=S.leads.find(x=>x.id===b.dataset.note);
+    b.onclick=()=>{modal(mText('Note','What happened, what they asked for, what to do next.','Note',l.note,'note',l.id));bindModal()}});
+  q('[data-del-a]',b=>b.onclick=()=>{S.assets=S.assets.filter(a=>a.id!==b.dataset.delA);S.links=S.links.filter(l=>l.asset!==b.dataset.delA);logit('Holding removed');save();render()});
+  q('[data-del-p]',b=>b.onclick=()=>{const id=b.dataset.delP;S.people=S.people.filter(p=>p.id!==id);S.links=S.links.filter(l=>l.person!==id);S.reporters=S.reporters.filter(r=>r!==id);logit('Person removed');save();render()});
+  q('[data-del-t]',b=>b.onclick=()=>{S.trace=S.trace.filter(t=>t.id!==b.dataset.delT);save();render()});
+  q('[data-opt]',b=>b.onclick=()=>{S.intake[Q[S.step].id]=b.dataset.opt;S.step++;save();render()});
+  q('[data-st]',s=>s.onchange=()=>{const l=S.leads.find(x=>x.id===s.dataset.st);l.status=s.value;logit(l.label+' → '+s.value);save();render()});
+  q('[data-rep]',c=>c.onchange=()=>{const id=c.dataset.rep;
+    S.reporters = c.checked ? [...S.reporters,id] : S.reporters.filter(r=>r!==id);
+    logit('Death reporters updated');save();render()});
+  q('[data-doc]',c=>c.onchange=()=>{S.docs[c.dataset.doc]=c.checked;save();render()});
+  q('[data-ev]',c=>c.onchange=()=>{S.evidence[c.dataset.ev]=c.checked;save()});
+
+  const qin=el.querySelector('#qin');
+  if(qin){qin.focus();qin.onkeydown=e=>{if(e.key==='Enter'){S.intake[Q[S.step].id]=qin.value.trim();S.step++;save();render()}}}
+}
+
+function bindModal(){
+  const m=document.getElementById('modal');
+  m.querySelectorAll('[data-close-btn]').forEach(b=>b.onclick=closeModal);
+  m.querySelector('[data-close]')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+  m.querySelectorAll('[data-act="add-person"]').forEach(b=>b.onclick=()=>{modal(mPerson());bindModal()});
+
+  const ft=m.querySelector('#f-type'), fi=m.querySelector('#f-inst');
+  if(ft&&fi) ft.onchange=()=>{fi.innerHTML=(INST[ft.value]||['Other']).map(i=>`<option>${i}</option>`).join('')};
+
+  m.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.save;
+    if(k==='asset'){
+      const t=m.querySelector('#f-type').value;
+      S.assets.push({id:uid(),type:t,inst:m.querySelector('#f-inst').value,ref:m.querySelector('#f-ref').value.trim(),nomAtInst:m.querySelector('#f-nom').value});
+      logit('Holding added');toast('Holding added');
+    }
+    else if(k==='person'){
+      const n=m.querySelector('#p-name').value.trim();
+      if(!n){toast('Name is needed');return}
+      S.people.push({id:uid(),name:n,rel:m.querySelector('#p-rel').value,phone:m.querySelector('#p-phone').value.trim()});
+      logit('Person added');toast('Person added');
+    }
+    else if(k==='link'){
+      const aid=b.dataset.aid;
+      S.links=S.links.filter(l=>l.asset!==aid);
+      m.querySelectorAll('[data-lk]').forEach(c=>{ if(c.checked){
+        const pid=c.dataset.lk, sc=m.querySelector(`[data-sc="${pid}"]`).value;
+        S.links.push({id:uid(),asset:aid,person:pid,scope:sc}); }});
+      logit('Designation updated');toast('Saved \u2014 they\u2019ll be told they\u2019ve been named, not what');
+    }
+    else if(k==='ref'){ const l=S.leads.find(x=>x.id===b.dataset.id); l.ref=m.querySelector('#t-val').value.trim(); toast('Reference saved'); }
+    else if(k==='note'){ const l=S.leads.find(x=>x.id===b.dataset.id); l.note=m.querySelector('#t-val').value.trim(); toast('Note saved'); }
+    else if(k==='trace'){
+      const n=m.querySelector('#tr-name').value.trim(); if(!n){toast('Name is needed');return}
+      const kind=m.querySelector('#tr-kind').value;
+      S.trace.push({id:uid(),name:n,kind});
+      const type=kind.indexOf('Dividend')===0?'demat':'bank';
+      S.leads.unshift({id:uid(),portal:type==='demat'?'iepf':'udgam',type,label:n+' — found in the AIS',
+        why:'Reported tax against their PAN. This institution definitely held their money.',score:97,status:'found',ref:'',note:'From Form 26AS / AIS'});
+      logit('AIS institution added: '+n);toast('Added to your case file');
+    }
+    else if(k==='profile'){
+      const n=m.querySelector('#pf-name').value.trim(), p=m.querySelector('#pf-pan').value.trim().toUpperCase();
+      if(!n){toast('Name is needed');return}
+      if(!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(p)){toast('That PAN doesn\u2019t look right');return}
+      S.profile={name:n,pan:p};logit('Registry owner details saved');toast('Saved');
+    }
+    else if(k==='reset'){
+      S={...S, journey:null,view:null,assets:[],people:[],links:[],reporters:[],event:null,log:[],
+         intake:{},step:0,leads:[],docs:{},trace:[],evidence:{},filter:'all',profile:{},lookup:null};
+      try{localStorage.removeItem('amanat_v1')}catch(e){}
+      toast('Prototype reset');
+    }
+    save();closeModal();render();
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
