@@ -10,7 +10,7 @@ const text=()=>(doc.getElementById('root').textContent+' '+doc.getElementById('m
 const res=[]; const check=(n,c,x='')=>{res.push(c);console.log((c?'PASS  ':'FAIL  ')+n+(c?'':'  <- '+x));};
 (async()=>{
   await wait(300);
-  check('L0 chooser copy mentions registry', text().includes('kept an Amanat registry and named you'));
+  check('L0 chooser copy mentions registry', text().includes('Their registry'));
   click('[data-j="recovery"]'); await wait(80);
   check('L1 lookup is step 1', text().includes('Did they use Amanat?'));
   check('L2 skip route still offered', !!$('[data-act="start-q"]') && !!$('[data-act="seed-r"]'));
