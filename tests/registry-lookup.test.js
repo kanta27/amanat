@@ -78,7 +78,7 @@ const res=[]; const check=(n,c,x='')=>{res.push(c);console.log((c?'PASS  ':'FAIL
   // registry side: profile gap + people badges
   click('[data-go="chooser"]'); await wait(40); click('[data-j="registry"]'); await wait(60);
   check('L29 overview shows registry owner + masked PAN', text().includes('Registry of Ramesh Kumar Sharma') && text().includes('AB•••••34K'));
-  click('[data-v="r-people"]'); await wait(60);
+  click('[data-v="r-family"]'); await wait(60);
   check('L30 people show they were told', text().includes('Told they’re named'));
   check('L31 nominee without mobile flagged', text().includes('Add a mobile so they can find you'));
 

@@ -775,7 +775,7 @@ function chooser(){
 }
 
 const NAV = {
-  registry:[{v:'r-home',n:'Overview',i:'home'},{v:'r-assets',n:'Holdings',i:'bank'},{v:'r-people',n:'People',i:'users'},{v:'r-family',n:'Family & will',i:'tree'},{v:'r-safeguards',n:'Safeguards',i:'lock'}],
+  registry:[{v:'r-home',n:'Overview',i:'home'},{v:'r-assets',n:'Holdings',i:'bank'},{v:'r-family',n:'Family & will',i:'users'},{v:'r-safeguards',n:'Safeguards',i:'lock'}],
   recovery:[{v:'v-plan',n:'Search plan',i:'map'},{v:'v-guides',n:'Guides',i:'tax'},{v:'v-case',n:'Case file',i:'folder'},{v:'v-docs',n:'Documents',i:'file'},{v:'v-ask',n:'Ask',i:'spark'}]
 };
 
@@ -857,8 +857,10 @@ views['r-family'] = () => {
     <span>${me?'Holder':esc(p.rel)}</span>${me?'':`<i class="badge ${p.share>0?'':'mock'}">${p.share>0?pctStr(p.share):'Not an heir'}</i>`}</div>`;
   const g=r=>H.filter(h=>r.includes(h.rel));
   const parents=g(['Mother','Father']), spouse=g(['Spouse']), kids=g(['Son','Daughter']), sibs=g(['Brother','Sister']), rest=H.filter(h=>!['Mother','Father','Spouse','Son','Daughter','Brother','Sister'].includes(h.rel));
-  return `<h1>Family &amp; will</h1>
-  <p class="sub" style="margin:6px 0 16px;max-width:600px">A nominee is not an owner. Since the Supreme Court&rsquo;s 2023 ruling in <i>Shakti Yezdani v. Jayanand Salgaonkar</i>, a nominee receives a holding and holds it for your legal heirs. Who actually keeps it is decided by your will or, without one, by succession law.</p>
+  return `<div class="row" style="margin-bottom:6px"><h1 style="flex:1">Family &amp; will</h1>
+    <button class="btn" data-act="add-person">${ic('plus',15)} Add person</button></div>
+  <p class="sub" style="margin:0 0 16px;max-width:600px">The people who should be told about your holdings, who inherits them by law, and whether your will and nominations agree. Since the Supreme Court&rsquo;s 2023 ruling in <i>Shakti Yezdani v. Jayanand Salgaonkar</i>, a nominee receives a holding and holds it for your legal heirs; your will or, without one, succession law decides who keeps it.</p>
+  ${peopleCard()}
   <div class="card"><div class="grid-3">
     <div class="field"><label>Personal law that applies</label><select id="sc-law">${Object.entries(LAWS).map(([k,v])=>`<option value="${k}" ${s.law===k?'selected':''}>${v.n}</option>`).join('')}</select></div>
     <div class="field"><label>You are</label><select id="sc-gender"><option value="male" ${s.gender==='male'?'selected':''}>Male</option><option value="female" ${s.gender==='female'?'selected':''}>Female</option></select></div>
@@ -872,7 +874,7 @@ views['r-family'] = () => {
       <div class="gen">${node(null,true)}${spouse.map(p=>node(p)).join('')}${sibs.length?`<span class="tsep"></span>${sibs.map(p=>node(p)).join('')}`:''}</div>
       ${kids.length?`<div class="gen">${kids.map(p=>node(p)).join('')}</div>`:''}
       ${rest.length?`<div class="gen others">${rest.map(p=>node(p)).join('')}</div>`:''}
-    </div>`:`<div class="empty"><p class="sub">Add your family in People to see this.</p><button class="btn sec sm" data-v="r-people" style="margin-top:10px">Go to People</button></div>`}
+    </div>`:`<div class="empty"><p class="sub">Add your family above to see this.</p><button class="btn sec sm" data-act="add-person" style="margin-top:10px">Add a person</button></div>`}
     <div class="note" style="margin-top:14px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span><div>${
       s.law==='muslim'?'<b>Muslim law limits a will to one-third of the estate</b> unless the other heirs consent. Shares shown are the main Sunni (Hanafi) rule and are approximate. Shia rules differ.'
       :s.law==='hindu'?'<b>Daughters have equal rights</b>, married or not (2005 amendment). Ancestral (coparcenary) property follows separate rules not shown here.'
@@ -955,20 +957,20 @@ views['r-assets'] = () => `
   <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
    <div><b>No balances, by design.</b> Balances go stale the day you enter them, and a list of what you own with amounts attached is a target. Amanat records only where a holding is and who should be told.</div></div>`;
 
-views['r-people'] = () => `
-  <div class="row" style="margin-bottom:14px"><h1 style="flex:1">People</h1>
-    <button class="btn" data-act="add-person">${ic('plus',15)} Add</button></div>
-  ${S.people.length? `<div class="card">${S.people.map(p=>{
+/* People now live inside Family & will; the old route still opens it */
+views['r-people'] = () => views['r-family']();
+const peopleCard = () => `
+  <div class="card"><div class="row"><h3 style="flex:1">Your people</h3><span class="tiny">${S.people.length} added</span></div>
+  ${S.people.length? `<div>${S.people.map(p=>{
     const n=S.links.filter(l=>l.person===p.id).length;
     return `<div class="item"><div class="ico">${ic('users')}</div><div class="bd">
       <div class="t">${esc(p.name)}</div><div class="s">${esc(p.rel)}${p.phone?' &middot; '+esc(p.phone):''}</div>
       <div class="chips"><span class="badge ${n?'':'bad'}">${n?n+' holding'+(n>1?'s':''):'Not designated anywhere'}</span>${n?'<span class="badge mock">Told they\u2019re named</span>':''}${n&&!p.phone?'<span class="badge warn">Add a mobile so they can find you</span>':''}
       ${S.reporters.includes(p.id)?'<span class="badge ok">Can report a death</span>':''}</div></div>
       <button class="btn sec sm" data-del-p="${p.id}" style="color:var(--clay)">Remove</button></div>`}).join('')}</div>`
-  : `<div class="card"><div class="empty"><h3>Nobody added yet</h3><p class="sub">Add the people who should learn about your holdings.</p>
-     <div style="margin-top:14px"><button class="btn" data-act="add-person">Add a person</button></div></div></div>`}
-  <div class="note" style="margin-top:12px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span>
-   <div><b>A nominee is a custodian, not an owner.</b> Under Indian law a nominee receives the asset and holds it for the legal heirs. Amanat records who should be <em>told</em>; who ultimately inherits is decided by succession law or your will.</div></div>`;
+  : `<div class="empty"><h3>Nobody added yet</h3><p class="sub">Add the people who should learn about your holdings: your spouse, children and parents first.</p>
+     <div style="margin-top:14px"><button class="btn" data-act="add-person">Add a person</button></div></div>`}
+  <p class="tiny" style="margin-top:10px">Amanat records who should be <em>told</em>. Who inherits is worked out below.</p></div>`;
 
 views['r-safeguards'] = () => `
   <h1>Safeguards</h1>

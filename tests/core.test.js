@@ -99,7 +99,7 @@ const check = (name, cond, extra='') => {
   check('R14 designation saved with scope', text().includes('Existence only'));
 
   // people
-  click('[data-v="r-people"]'); await wait(80);
+  click('[data-v="r-family"]'); await wait(80);
   check('R15 people list renders', text().includes('Sunita Sharma') && text().includes('Arjun Sharma'));
   check('R16 reporter flag shows', text().includes('Can report a death'));
 
