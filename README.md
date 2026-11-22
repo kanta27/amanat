@@ -72,7 +72,17 @@ npm install
 npm test
 ```
 
-106 headless checks across both journeys. They cover the registry, the disclosure rules (including that nothing is shown before two reports, and that other family members' holdings never appear), the registry lookup, the merged search, persistence and reset.
+162 headless checks across three suites. They cover the registry, the disclosure rules (including that nothing is shown before two reports, and that other family members' holdings never appear), the registry lookup, the merged search, persistence and reset; the heir-share arithmetic under each personal law, nominee conflicts, will gaps, the wider asset types and leads, claim routes and escalation; and the live lookups and assistant, with the network and AI mocked.
+
+## Added in November 2026
+
+See [docs/RESEARCH.md](docs/RESEARCH.md) for the research, the gap analysis and the plan for rolling this out across India.
+
+- **22 asset types** in six groups, including EPS-95 family pension, EDLI insurance, gratuity, government family pension, NPS/APY, PMJJBY/PMSBY, Sovereign Gold Bonds, lockers, gold, land, vehicles, crypto and loans.
+- **Family & will.** Intestate shares under Hindu, Muslim, Indian Succession Act and Parsi rules, a family tree, and a check of each nominee against the legal heirs (*Shakti Yezdani*, 2023). Beneficial insurance nominees and statutory family benefits are correctly excluded.
+- **Per-asset claim routes**: forms, documents, timelines and the regulator to escalate to.
+- **Live lookups** (public APIs, no keys): IFSC to branch (Razorpay IFSC), PIN code to post offices and the state land-records portal (India Post), and scheme name to fund house and registrar (mfapi.in / AMFI).
+- **Ask Amanat**: an AI claims assistant grounded in the case file and the rules table. It runs where the Claude artifact runtime is present and says so plainly elsewhere.
 
 ## Credits
 

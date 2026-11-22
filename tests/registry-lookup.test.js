@@ -52,7 +52,7 @@ const res=[]; const check=(n,c,x='')=>{res.push(c);console.log((c?'PASS  ':'FAIL
   // extend into the wider search
   click('[data-act="extend-search"]'); await wait(80);
   check('L20 interview opens pre-filled', $('#qin') && $('#qin').value==='Ramesh Kumar Sharma', $('#qin')&&$('#qin').value);
-  for(let i=0;i<11;i++){ const s=$('[data-act="q-skip"]'); if(!s) break; click(s); await wait(40); }
+  for(let i=0;i<16;i++){ const s=$('[data-act="q-skip"]'); if(!s) break; click(s); await wait(40); }
   await wait(100);
   const labels=$$('.lead-card b').map(b=>b.textContent.trim());
   check('L21 wider search added', $$('.lead-card').length>4, 'count '+$$('.lead-card').length);

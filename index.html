@@ -224,6 +224,33 @@ td{padding:10px 10px 10px 0;border-top:1px solid var(--line-soft);vertical-align
 .ck li{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
 .ck li:last-child{border:none}
 .ck input{margin-top:3px;accent-color:var(--blue-deep);width:15px;height:15px;flex-shrink:0}
+
+/* family tree */
+.tree{display:flex;flex-direction:column;align-items:center;gap:22px;padding:6px 0}
+.gen{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;position:relative}
+.gen+.gen::before{content:'';position:absolute;top:-22px;left:50%;width:2px;height:22px;background:var(--line)}
+.gen.others{padding-top:12px;border-top:1px dashed var(--line)}
+.gen.others::before{display:none}
+.node{border:1px solid var(--line);border-radius:12px;padding:9px 13px;min-width:118px;text-align:center;background:var(--card);display:flex;flex-direction:column;align-items:center;gap:3px}
+.node b{font-size:13px;font-weight:600}
+.node span{font-size:11px;color:var(--muted)}
+.node i{font-style:normal;margin-top:3px}
+.node.heir{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-tint)}
+.node.me{background:var(--blue-deep);border-color:var(--blue-deep)}
+.node.me b,.node.me span{color:#fff}
+.tsep{width:1px;height:38px;background:var(--line);margin:0 6px}
+.m .node{min-width:96px;padding:8px 9px}
+
+/* live lookups */
+.live{border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-top:10px;background:var(--paper);font-size:13px}
+.live .row{flex-wrap:wrap}
+.live-badge{background:var(--ok-bg);color:var(--ok)}
+.live-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+.chat{display:flex;flex-direction:column;gap:9px;margin:10px 0}
+.chat .q{align-self:flex-end;background:var(--blue-deep);color:#fff;padding:8px 12px;border-radius:12px 12px 2px 12px;max-width:85%}
+.chat .a{align-self:flex-start;background:var(--blue-tint);padding:10px 13px;border-radius:12px 12px 12px 2px;max-width:92%;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -253,6 +280,8 @@ const I = {
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   ext:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/>',
   back:'<path d="M19 12H5M11 18l-6-6 6-6"/>',
+  tree:'<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
+  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   tax:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h3"/>'
 };
@@ -274,17 +303,124 @@ const INST = {
   demat:['Zerodha','Groww','Upstox','Angel One','HDFC Securities','ICICI Direct','Other broker'],
   epf:['EPFO'],
   post:['India Post'],
-  shares:['Held directly in physical form','Held in demat']
+  shares:['Held directly in physical form','Held in demat'],
+  locker:['State Bank of India','HDFC Bank','ICICI Bank','Punjab National Bank','Bank of Baroda','Canara Bank','Other bank'],
+  ppf:['India Post','State Bank of India','Other bank'],
+  fd:['Bajaj Finance','Shriram Finance','Mahindra Finance','RBI Floating Rate Bond','Tax-free / PSU bond','Other issuer'],
+  pmjjby:['State Bank of India','HDFC Bank','ICICI Bank','Punjab National Bank','Bank of Baroda','Other bank'],
+  health:['Employer group cover','Loan protection cover','Credit card accident cover','Star Health','Niva Bupa','HDFC ERGO','Other insurer'],
+  sgb:['RBI (bought through a bank)','RBI (bought at a post office)','RBI Retail Direct','Held in demat'],
+  eps:['EPFO'], edli:['EPFO'],
+  nps:['NPS — Protean CRA','NPS — KFintech CRA','NPS — CAMS CRA','Atal Pension Yojana'],
+  govpen:['Central Government (CPAO)','State Government treasury','Defence (SPARSH)','Railways','Public sector undertaking'],
+  gratuity:['Current employer','Previous employer'],
+  property:['Owned house or flat','Agricultural land','Plot','Ancestral property, not yet transferred','Under construction (builder)'],
+  gold:['Kept at home','Pledged as a gold loan','Digital gold','Silver or other metals'],
+  vehicle:['Car','Two-wheeler','Commercial vehicle'],
+  digital:['Indian crypto exchange','Foreign exchange or self-custody wallet','Domain, website or creator income','Other online account'],
+  loan:['Home loan','Personal loan','Credit card','Gold loan','Business loan','Money owed to or by relatives']
 };
+/* via: how the asset reaches the family. nom = institutional nomination exists; will = only a will (or succession law) moves it; debt = a liability.
+   pid: the portal or route used to trace it. g: group in the add-holding form. */
 const TYPES = [
-  {k:'bank', t:'Bank account or deposit', portal:'UDGAM'},
-  {k:'insurance', t:'Life insurance policy', portal:'Bima Bharosa'},
-  {k:'mf', t:'Mutual fund folio', portal:'MITRA / MF Central'},
-  {k:'demat', t:'Demat / shares', portal:'IEPF'},
-  {k:'epf', t:'Provident fund (EPF)', portal:'EPFO'},
-  {k:'post', t:'Post office savings / NSC / KVP', portal:'India Post'}
+  {k:'bank', t:'Bank account or deposit', portal:'UDGAM', pid:'udgam', via:'nom', g:'Banking and savings'},
+  {k:'locker', t:'Bank locker', portal:'The bank branch', pid:'', via:'nom', g:'Banking and savings'},
+  {k:'post', t:'Post office savings / NSC / KVP', portal:'India Post', pid:'post', via:'nom', g:'Banking and savings'},
+  {k:'ppf', t:'PPF / Sukanya Samriddhi / SCSS', portal:'The bank or post office', pid:'post', via:'nom', g:'Banking and savings'},
+  {k:'fd', t:'Company FD or bond', portal:'The issuer or its registrar', pid:'', via:'nom', g:'Banking and savings'},
+  {k:'insurance', t:'Life insurance policy', portal:'Bima Bharosa', pid:'bima', via:'nom', g:'Insurance'},
+  {k:'pmjjby', t:'PMJJBY / PMSBY cover', portal:'The bank that debits the premium', pid:'', via:'nom', g:'Insurance'},
+  {k:'health', t:'Group, accident or loan cover', portal:'The insurer or employer', pid:'bima', via:'nom', g:'Insurance'},
+  {k:'mf', t:'Mutual fund folio', portal:'MITRA / MF Central', pid:'mitra', via:'nom', g:'Market investments'},
+  {k:'demat', t:'Demat / shares', portal:'IEPF', pid:'iepf', via:'nom', g:'Market investments'},
+  {k:'sgb', t:'Sovereign Gold Bond', portal:'The issuing bank or RBI Retail Direct', pid:'', via:'nom', g:'Market investments'},
+  {k:'epf', t:'Provident fund (EPF)', portal:'EPFO', pid:'epfo', via:'nom', g:'Retirement and pension'},
+  {k:'eps', t:'EPS-95 family pension', portal:'EPFO', pid:'epfo', via:'nom', g:'Retirement and pension'},
+  {k:'edli', t:'EDLI insurance (comes with EPF)', portal:'EPFO', pid:'epfo', via:'nom', g:'Retirement and pension'},
+  {k:'nps', t:'NPS / Atal Pension Yojana', portal:'NPS CRA', pid:'nps', via:'nom', g:'Retirement and pension'},
+  {k:'govpen', t:'Government pension / family pension', portal:'Head of office or pension bank', pid:'', via:'nom', g:'Retirement and pension'},
+  {k:'gratuity', t:'Gratuity and final dues', portal:'The employer', pid:'', via:'nom', g:'Retirement and pension'},
+  {k:'property', t:'Land, house or flat', portal:'State land records', pid:'land', via:'will', g:'Property and physical'},
+  {k:'gold', t:'Gold, jewellery or silver', portal:'No registry exists', pid:'', via:'will', g:'Property and physical'},
+  {k:'vehicle', t:'Vehicle', portal:'Parivahan / RTO', pid:'vahan', via:'nom', g:'Property and physical'},
+  {k:'digital', t:'Crypto or digital asset', portal:'The exchange or platform', pid:'', via:'will', g:'Digital'},
+  {k:'loan', t:'Loan or credit card (owed)', portal:'Credit report', pid:'cibil', via:'debt', g:'Liabilities'}
 ];
 const TYPE_LABEL = Object.fromEntries(TYPES.map(t=>[t.k,t.t]));
+const TYPE_OF = k => TYPES.find(t=>t.k===k)||{k,t:k,via:'nom',pid:''};
+const TYPE_ICON = {bank:'bank',locker:'lock',post:'bank',ppf:'bank',fd:'bank',insurance:'shield',pmjjby:'shield',health:'shield',mf:'chart',demat:'chart',sgb:'chart',
+  epf:'shield',eps:'shield',edli:'shield',nps:'shield',govpen:'shield',gratuity:'file',property:'home',gold:'lock',vehicle:'file',digital:'file',loan:'alert'};
+/* the holdings families most often forget to record, in the order they cost the most */
+const FORGOTTEN = ['eps','edli','govpen','gratuity','pmjjby','locker','property','gold','nps','loan'];
+
+/* How each kind of holding is actually claimed. Forms named are the ones in use as of 2026; amounts are statutory or regulator figures. */
+const CLAIM = {
+  bank:{where:'The branch that holds the account. If it has been dormant ten years or more, search UDGAM first: the money sits with the RBI but is still claimed at the bank.',
+    forms:['The bank’s deceased-claim form (RBI standardised format, 2025)'],extra:['bank_c'],
+    sla:'RBI’s September 2025 directions require banks to settle a complete claim within 15 days. Where there is no nominee, banks must use a simplified procedure, without a succession certificate, up to at least ₹15 lakh (₹5 lakh at co-operative banks).',esc:'rbi',
+    next:'Take the death certificate and your KYC to the branch.'},
+  locker:{where:'The branch. Contents are inventoried in front of the claimant and a witness before they are handed over.',
+    forms:['Locker claim form','Inventory of contents, prepared at the branch'],extra:[],
+    sla:'Covered by the same RBI deceased-claim directions as deposits. Since November 2025 a locker can carry up to four successive nominees.',esc:'rbi',
+    next:'Ask the branch for a joint inventory appointment.'},
+  post:{where:'The post office where the account or certificate is held.',forms:['Form 11: claim for a deceased depositor'],extra:['bank_c'],
+    sla:'With a nominee: death certificate and KYC. Without one, small balances are settled on affidavit and indemnity; larger ones need a succession certificate.',esc:'cpgrams',
+    next:'Submit Form 11 at the post office that holds it.'},
+  ppf:{where:'The bank branch or post office that holds the PPF, SSY or SCSS account.',forms:['Form 11 (post office) or the bank’s PPF closure-on-death form'],extra:['bank_c'],
+    sla:'The account is closed and paid out. It cannot be continued by the heir.',esc:'cpgrams',next:'Ask the holding branch to close the account on death.'},
+  fd:{where:'The issuing company or its registrar (KFintech, Link Intime and similar).',forms:['Transmission request with the deposit receipt'],extra:['bank_c'],
+    sla:'Company deposits are not covered by deposit insurance. Claim early.',esc:'scores',next:'Write to the issuer’s registrar with the receipt number.'},
+  insurance:{where:'The insurer’s nearest branch, or its claims e-mail.',forms:['Death claim form','Original policy bond (an indemnity if it is lost)','Claimant’s statement'],extra:['bank_c'],
+    sla:'IRDAI’s 2024 master circular: death claims that need no investigation are settled within 15 days of complete documents.',esc:'irdai',
+    next:'File the insurer’s death claim form with the policy bond.'},
+  pmjjby:{where:'The bank that debited the yearly premium. Look for a debit labelled PMJJBY or PMSBY on their statement.',forms:['PMJJBY or PMSBY claim form, filed through the bank'],extra:['bank_c'],
+    sla:'PMJJBY pays ₹2 lakh on death from any cause; PMSBY pays ₹2 lakh on accidental death. A person can hold both.',esc:'rbi',
+    next:'Ask the bank whether either scheme was active on the date of death.'},
+  health:{where:'The insurer, or the employer’s HR team for group cover.',forms:['Claim form for the specific cover'],extra:[],
+    sla:'Loan protection cover pays off the loan itself. Group term cover through an employer is often larger than families expect.',esc:'irdai',
+    next:'Ask the employer and every lender whether a cover was attached.'},
+  mf:{where:'The AMC or its registrar (CAMS or KFintech). MF Central accepts transmission requests online.',forms:['Transmission request form (SEBI standard)'],extra:['bank_c'],
+    sla:'Transmission to a nominee needs only the death certificate and the nominee’s KYC.',esc:'scores',next:'File a transmission request on MF Central.'},
+  demat:{where:'The depository participant for demat holdings. Physical certificates go to the company’s registrar.',forms:['DP transmission form (demat)','Form ISR-5 (physical shares)','Form IEPF-5, if already transferred to the IEPF'],extra:[],
+    sla:'SEBI’s rules cut transmission to a nominee down to the death certificate and the nominee’s KYC.',esc:'scores',next:'Ask the broker or DP for its transmission form.'},
+  sgb:{where:'The bank, post office or SHCIL office it was bought through; the DP if held in demat; RBI Retail Direct if bought there.',forms:['SGB transmission request'],extra:['bank_c'],
+    sla:'The bond keeps paying 2.5% interest after transmission, and can be redeemed early on an interest date.',esc:'rbi',next:'Ask the issuing office for SGB transmission.'},
+  epf:{where:'EPFO, online or through the last employer. File the composite death claim, which covers EPF, EPS and EDLI together.',forms:['Form 20: provident fund balance','Composite Claim Form (Death)'],extra:['bank_c','service'],
+    sla:'File the pension and insurance forms with it. Many families file only Form 20 and leave the rest unclaimed.',esc:'epfo',next:'File the composite death claim with EPFO.'},
+  eps:{where:'EPFO, through the last employer or online.',forms:['Form 10D: monthly family pension'],extra:['bank_c','service'],
+    sla:'A monthly pension for the spouse for life, and for up to two children at a time until 25. It runs from the day after death.',esc:'epfo',
+    next:'File Form 10D. This is the benefit families most often miss.'},
+  edli:{where:'EPFO, with the employer attesting the form.',forms:['Form 5IF: EDLI insurance'],extra:['bank_c','service'],
+    sla:'A lump sum of ₹2.5 lakh to ₹7 lakh, paid with no premium ever having been charged to the member. Families rarely know it exists.',esc:'epfo',
+    next:'File Form 5IF alongside the PF claim.'},
+  nps:{where:'The point of presence (bank) where the account was opened, or the employer’s nodal office for government staff.',forms:['NPS withdrawal form on death of subscriber'],extra:['bank_c'],
+    sla:'The whole corpus goes to the nominee. For Atal Pension Yojana, the spouse can continue the account or take the corpus.',esc:'nps',next:'Submit the death withdrawal form at the point of presence.'},
+  govpen:{where:'The pension disbursing bank if they were already a pensioner; the head of office if they died in service.',forms:['Family pension claim (Form 14 under CCS Pension Rules 2021) or the PPO endorsement'],extra:['ppo','bank_c'],
+    sla:'Family pension is usually the largest single benefit a government employee leaves. Defence pensions run through SPARSH.',esc:'cpgrams',next:'Give the pension bank the death certificate and the PPO.'},
+  gratuity:{where:'The employer’s HR team.',forms:['Form J (nominee) or Form K (legal heir) under the Payment of Gratuity Rules'],extra:['bank_c','service'],
+    sla:'The employer must pay within 30 days of the claim. Ask in the same letter about leave encashment, final salary and any group insurance.',esc:'cpgrams',
+    next:'Write to HR for gratuity, final dues and group cover together.'},
+  property:{where:'The tehsil or revenue office for land; the municipal body or housing society for a flat.',forms:['Mutation application','Probate, where the will was made in Mumbai, Kolkata or Chennai'],extra:['will','title'],
+    sla:'Until mutation is done the heirs cannot sell, mortgage or receive compensation. A housing-society nominee holds the flat for the legal heirs, just as a bank nominee does.',esc:'',
+    next:'Apply for mutation in the heirs’ names at the revenue office.'},
+  gold:{where:'Nowhere. There is no register of gold, so it passes only by will or by succession law, and is the most common subject of family disputes.',forms:['A written list in the will, or a family settlement deed'],extra:['will'],
+    sla:'If it was pledged as a gold loan, the heirs repay the loan to release it.',esc:'',next:'Agree a written family settlement before dividing it.'},
+  vehicle:{where:'The RTO where it is registered, or online on Parivahan.',forms:['Form 31: transfer of ownership on death'],extra:['rc'],
+    sla:'Apply within three months of death. Since 2021 an owner can record a nominee on the registration certificate.',esc:'cpgrams',next:'File Form 31 at the RTO.'},
+  digital:{where:'The exchange or platform’s deceased-user process. Self-custody wallets cannot be recovered at all without the keys.',forms:['Exchange’s transmission request'],extra:['will'],
+    sla:'India has no law on inheriting digital assets yet. Keys and passwords left nowhere are lost for good.',esc:'',next:'Contact the exchange’s support with the death certificate.'},
+  loan:{where:'Each lender. Pull their credit report first to see every open loan and card.',forms:['Written intimation of death to each lender'],extra:[],
+    sla:'Heirs are not personally liable for a debt unless they co-signed or guaranteed it; the lender recovers from the estate. Check for loan protection insurance before paying anything.',esc:'rbi',
+    next:'Inform the lender in writing and ask whether the loan was insured.'}
+};
+const ESCALATE = [
+  {id:'rbi', n:'RBI Integrated Ombudsman', who:'Banks, lockers, NBFCs', when:'If the bank has not resolved your complaint within 30 days, or you are unhappy with its reply.', url:'https://cms.rbi.org.in/'},
+  {id:'irdai', n:'Bima Bharosa, then the Insurance Ombudsman', who:'Life, health and accident insurers', when:'Complain to the insurer first. Escalate if there is no resolution in 30 days.', url:'https://bimabharosa.irdai.gov.in/'},
+  {id:'scores', n:'SEBI SCORES, then SMART ODR', who:'Brokers, depositories, AMCs, registrars, listed companies', when:'After the entity has had 21 days to respond.', url:'https://scores.sebi.gov.in/'},
+  {id:'epfo', n:'EPFiGMS', who:'EPF, EPS pension and EDLI claims', when:'If a claim is pending beyond 20 days or is rejected without a clear reason.', url:'https://epfigms.gov.in/'},
+  {id:'nps', n:'NPS grievance (through the CRA)', who:'NPS and Atal Pension Yojana', when:'If the point of presence or nodal office does not act.', url:'https://www.npscra.nsdl.co.in/'},
+  {id:'cpgrams', n:'CPGRAMS', who:'Government pensions, post office, any central ministry or department', when:'When there is no specialised ombudsman for the office that is stuck.', url:'https://pgportal.gov.in/'}
+];
 
 const PORTALS = [
   {id:'udgam', n:'UDGAM', who:'Reserve Bank of India', what:'Dormant and unclaimed bank deposits across participating banks.',
@@ -307,11 +443,36 @@ const PORTALS = [
    out:'Folios traced against that PAN, across AMCs.',
    note:'If you can reach the deceased’s email, a CAS request often returns more than the portal does.',
    url:'https://www.mfcentral.com/'},
-  {id:'epfo', n:'EPFO', who:'Employees’ Provident Fund Organisation', what:'Provident fund balances, including inoperative accounts from old employers.',
+  {id:'epfo', n:'EPFO', who:'Employees’ Provident Fund Organisation', what:'Provident fund balances, including inoperative accounts from old employers, plus the EPS family pension and EDLI insurance that come with them.',
    need:['UAN, or the employer name and period of service','Member ID from an old payslip helps a great deal'],
    out:'Balance and claim status per member ID.',
-   note:'One person often has several member IDs across employers that were never merged.',
-   url:'https://www.epfindia.gov.in/'}
+   note:'One person often has several member IDs across employers that were never merged. Each death claim should cover PF (Form 20), pension (Form 10D) and insurance (Form 5IF).',
+   url:'https://www.epfindia.gov.in/'},
+  {id:'clp', n:'Common Landing Portal', who:'Department of Financial Services', what:'One search point for unclaimed bank deposits, insurance, shares, dividends and mutual funds, launched in May 2026.',
+   need:['Name of the holder','PAN or other ID details','Date of birth'],
+   out:'Pointers into the regulator portals that hold a match.',
+   note:'Start here, then confirm on each regulator’s own portal. It does not yet cover EPF, NPS, pensions or property.',
+   url:'https://www.unclaimedassetsportal.in/'},
+  {id:'nps', n:'NPS CRA', who:'PFRDA, through Protean, KFintech and CAMS', what:'National Pension System and Atal Pension Yojana accounts.',
+   need:['PRAN, if known','PAN and date of birth of the subscriber'],
+   out:'Account status and the point of presence that holds it.',
+   note:'Government employees who joined after 2004 are almost all on NPS. Ask the employer’s nodal office.',
+   url:'https://www.npscra.nsdl.co.in/'},
+  {id:'land', n:'State land records', who:'State revenue departments', what:'Land ownership extracts (7/12, khatauni, jamabandi, patta), searchable by owner name in most states.',
+   need:['District, tehsil and village','Owner’s name, or the survey or khasra number'],
+   out:'The record of rights, which shows whose name the land is in.',
+   note:'Each state runs its own portal. The national DILRMP site links to all of them.',
+   url:'https://dilrmp.gov.in/'},
+  {id:'vahan', n:'Parivahan', who:'Ministry of Road Transport and Highways', what:'Vehicle registration and transfer of ownership on death.',
+   need:['Registration number','Death certificate and the RC'],
+   out:'Ownership transfer through Form 31.',
+   note:'Apply within three months of death to avoid a late fee.',
+   url:'https://parivahan.gov.in/'},
+  {id:'cibil', n:'Credit report', who:'CIBIL, Experian, Equifax, CRIF', what:'Every loan and credit card in their name.',
+   need:['PAN of the deceased','Death certificate and proof you are an heir'],
+   out:'A list of lenders, which also reveals insurance attached to loans.',
+   note:'Debts are recovered from the estate, not from you, unless you co-signed or guaranteed.',
+   url:'https://www.cibil.com/'}
 ];
 
 const EMAIL_TERMS = ['Consolidated Account Statement','NSDL CAS','CDSL CAS','folio number','policy number','premium due','maturity','UAN','dividend','demat','statement of account','nomination'];
@@ -324,7 +485,13 @@ const DOCS = [
   {id:'heir', n:'Legal heir or surviving member certificate', why:'Issued by the local revenue authority or a court. Needed wherever no nominee was registered.', hard:true},
   {id:'succ', n:'Succession certificate', why:'Court-issued. Often demanded above a bank’s threshold when there is no nominee.', hard:true},
   {id:'indem', n:'Indemnity bond and affidavit', why:'Standard where other heirs must consent to your claim.', hard:false},
-  {id:'relation', n:'Proof of relationship', why:'Ration card, passport or school record linking you to the deceased.', hard:false}
+  {id:'relation', n:'Proof of relationship', why:'Ration card, passport or school record linking you to the deceased.', hard:false},
+  {id:'bank_c', n:'Your cancelled cheque or bank details', why:'Every payout goes to the claimant’s own account.', hard:false},
+  {id:'will', n:'Will, or probate where required', why:'The only instrument that moves land, gold and digital assets as they wanted. Probate is mandatory for wills made in Mumbai, Kolkata and Chennai.', hard:true},
+  {id:'service', n:'Employer attestation and service details', why:'EPF, EPS, EDLI and gratuity forms are attested by the last employer.', hard:false},
+  {id:'ppo', n:'Pension payment order (PPO)', why:'Government family pension is endorsed on the PPO. Check their papers for it.', hard:false},
+  {id:'title', n:'Title deed and latest land record extract', why:'Needed for mutation of land or transfer of a flat.', hard:false},
+  {id:'rc', n:'Vehicle RC and insurance', why:'Needed for Form 31 at the RTO.', hard:false}
 ];
 
 const Q = [
@@ -333,11 +500,16 @@ const Q = [
   {id:'nom', t:'Were you registered as a nominee anywhere?', s:'A registered nomination is by far the shortest route — a death certificate and your KYC is often all that is needed.', f:'choice', opts:['Yes, on at least one holding','No','I don’t know']},
   {id:'pan', t:'Do you have their PAN?', s:'This is the single most useful thing you can have. It unlocks the tax records route.', f:'choice', opts:['Yes','No, but I can get it','No']},
   {id:'emp', t:'Where did they work?', s:'Each employer usually means a provident fund account, and sometimes shares.', f:'text', ph:'Employers, in any order — leave blank if unsure'},
+  {id:'work', t:'What kind of work did they do?', s:'This decides which pensions and insurance came with the job. Families most often miss these.', f:'choice', opts:['Salaried, private sector','Central or state government','Defence or railways','Self-employed or business','Retired, drawing a pension','Did not work outside home']},
   {id:'cities', t:'Which cities did they live in?', s:'Accounts opened in a city they later left are the ones that most often go dormant.', f:'text', ph:'e.g. Nagpur, Pune, Mumbai'},
   {id:'banks', t:'Which banks do you know they used?', s:'Add any you are unsure about — a wrong guess costs nothing on UDGAM.', f:'text', ph:'e.g. SBI, Bank of Baroda'},
   {id:'ins', t:'Did they hold life insurance?', s:'LIC policies bought decades ago through an agent are among the most commonly unclaimed assets.', f:'choice', opts:['Yes','I think so','No','I don’t know']},
   {id:'shares', t:'Did they ever own shares?', s:'Physical share certificates and old IPO allotments frequently end up with the IEPF.', f:'choice', opts:['Yes, and I have papers','Yes, but I have no papers','I don’t know','No']},
   {id:'post', t:'Any post office savings, NSC or KVP?', s:'Common in smaller towns and among older savers, and rarely tracked digitally.', f:'choice', opts:['Yes','I don’t know','No']},
+  {id:'gold', t:'Did they keep gold, jewellery or a bank locker?', s:'Gold has no register anywhere. It passes only by will or by succession law.', f:'choice', opts:['Yes, a bank locker','Yes, at home','Gold bonds or digital gold','I don’t know','No']},
+  {id:'prop', t:'Did they own land, a house or a flat?', s:'Property is where most family disputes happen, usually because nobody updated the land record.', f:'choice', opts:['Yes, in their name','Yes, jointly','Ancestral, never transferred','I don’t know','No']},
+  {id:'veh', t:'Did they own a vehicle?', s:'Ownership has to be transferred at the RTO within three months.', f:'choice', opts:['Yes','No']},
+  {id:'loan', t:'Did they have any loans or credit cards?', s:'Debts are not passed to you personally. Many loans also carry insurance that pays them off.', f:'choice', opts:['Yes','I think so','I don’t know','No']},
   {id:'email', t:'Can you access their email or phone?', s:'Statements are emailed, not posted. This is often the richest single source.', f:'choice', opts:['Yes, email','Yes, phone only','Both','Neither']}
 ];
 
@@ -345,7 +517,8 @@ const Q = [
 let S = {
   journey:null, view:null, device:'desktop', ready:false, db:null, uid:null,
   assets:[], people:[], links:[], reporters:[], event:null, log:[],
-  intake:{}, step:0, leads:[], docs:{}, trace:[], evidence:{}, guideTab:'trace', filter:'all', profile:{}, lookup:null
+  intake:{}, step:0, leads:[], docs:{}, trace:[], evidence:{}, guideTab:'trace', filter:'all', profile:{}, lookup:null,
+  succ:{law:'hindu', gender:'male', will:'none', executor:''}
 };
 
 const uid = () => Math.random().toString(36).slice(2,9);
@@ -357,7 +530,7 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 function logit(what){ S.log.unshift({id:uid(),what,at:new Date().toISOString()}); S.log=S.log.slice(0,60); }
 
 /* ---- persistence ---- */
-const KEYS = ['journey','assets','people','links','reporters','event','log','intake','step','leads','docs','trace','evidence','profile','lookup'];
+const KEYS = ['journey','assets','people','links','reporters','event','log','intake','step','leads','docs','trace','evidence','profile','lookup','succ','chat'];
 let saveTimer=null, booted=false;
 function save(){
   if(!booted) return;
@@ -391,30 +564,114 @@ async function boot(){
 }
 
 /* ============================ scoring ============================ */
+const hasWill = () => ['signed','registered'].includes(S.succ&&S.succ.will);
+const aLabel = a => TYPE_OF(a.type).via==='will' ? (a.ref||a.inst)
+  : a.type==='loan' || S.assets.filter(x=>x.inst===a.inst).length>1 ? a.inst+' ('+TYPE_LABEL[a.type].toLowerCase()+')' : a.inst;
+/* Where the nominee keeps the money rather than holding it for the heirs:
+   life cover naming a spouse, parent or child (Insurance Act s.39(7), as amended in 2015), and statutory family benefits. */
+const CLOSE_FAMILY = ['Spouse','Son','Daughter','Mother','Father'];
+const beneficialNominee = (a, nom) => ['eps','edli','govpen'].includes(a.type)
+  || (['insurance','pmjjby','health'].includes(a.type) && CLOSE_FAMILY.includes(nom.rel));
 function readiness(){
   if(!S.assets.length) return {pct:0, parts:[]};
+  const nomA = S.assets.filter(a=>TYPE_OF(a.type).via==='nom');
   const withNom = S.assets.filter(a=>S.links.some(l=>l.asset===a.id)).length;
-  const regAtInst = S.assets.filter(a=>a.nomAtInst==='yes').length;
+  const regAtInst = nomA.filter(a=>a.nomAtInst==='yes').length;
   const withId = S.assets.filter(a=>a.ref&&a.ref.trim()).length;
   const n=S.assets.length;
-  const parts=[
-    {k:'Nominee designated here', v:withNom, n, w:.4},
-    {k:'Nomination registered at the institution', v:regAtInst, n, w:.35},
-    {k:'Identifier recorded', v:withId, n, w:.15},
+  let parts=[
+    {k:'Nominee designated here', v:withNom, n, w:.33},
+    {k:'Nomination registered at the institution', v:regAtInst, n:nomA.length, w:.27},
+    {k:'Identifier recorded', v:withId, n, w:.10},
+    {k:'Will signed, nominees aligned with heirs', v:(hasWill()?1:0)+(conflicts().length?0:1), n:2, w:.20},
     {k:'Two death reporters set', v:Math.min(S.reporters.length,2), n:2, w:.10}
-  ];
-  const pct=Math.round(parts.reduce((s,p)=>s+(p.v/p.n)*p.w,0)*100);
+  ].filter(p=>p.n>0);
+  const W=parts.reduce((s,p)=>s+p.w,0);
+  const pct=Math.round(parts.reduce((s,p)=>s+(p.v/p.n)*p.w,0)/W*100);
   return {pct, parts};
 }
 function gaps(){
-  const g=[];
+  const g=[], toFam=()=>{S.view='r-family';render();};
   if(S.assets.length&&!(S.profile&&S.profile.pan)) g.push({sev:'bad', t:'Your family cannot find this registry yet', s:'Add your name and PAN. That is how the people you name look you up after your death.', go:()=>{modal(mProfile());bindModal();}});
   S.assets.forEach(a=>{
-    if(!S.links.some(l=>l.asset===a.id)) g.push({sev:'bad', t:`${a.inst} has no nominee designated`, s:'Nobody will be told this exists.', go:()=>{S.view='r-assets';render();}});
-    else if(a.nomAtInst!=='yes') g.push({sev:'warn', t:`${a.inst} is not nominated at the institution`, s:'Amanat will tell your family, but the institution will still ask for a succession certificate.', go:()=>{S.view='r-assets';render();}});
+    const via=TYPE_OF(a.type).via;
+    if(!S.links.some(l=>l.asset===a.id)) g.push({sev:'bad', t:`${aLabel(a)} has no nominee designated`, s:via==='debt'?'Nobody will know to tell this lender, or to claim any insurance attached to it.':'Nobody will be told this exists.', go:()=>{S.view='r-assets';render();}});
+    else if(via==='nom'&&a.nomAtInst!=='yes') g.push({sev:'warn', t:`${aLabel(a)} is not nominated at the institution`, s:'Amanat will tell your family, but the institution will still ask for a legal heir or succession certificate.', go:()=>{S.view='r-assets';render();}});
   });
+  const willOnly=S.assets.filter(a=>TYPE_OF(a.type).via==='will');
+  if(!hasWill()) g.push({sev:willOnly.length?'bad':'warn', t:'You have no signed will', s:willOnly.length
+      ? `${willOnly.map(aLabel).join(', ')} ${willOnly.length>1?'have':'has'} no nomination system. Without a will, succession law divides ${willOnly.length>1?'them':'it'}, whatever you intended.`
+      : 'Nominees receive your holdings but hold them for your legal heirs. Only a will decides who keeps them.', go:toFam});
+  const c=conflicts();
+  if(c.length) g.push({sev:'warn', t:`${c.length} holding${c.length>1?'s go':' goes'} to a nominee who is not your only heir`, s:'The nominee receives it but must share it with the other heirs. This is where most family disputes start.', go:toFam});
+  if(S.assets.some(a=>a.type==='epf')){
+    const miss=['eps','edli'].filter(k=>!S.assets.some(a=>a.type===k));
+    if(miss.length) g.push({sev:'warn', t:'Your EPF carries a pension and insurance you have not recorded', s:`Record the ${miss.map(k=>k==='eps'?'EPS-95 family pension':'EDLI insurance').join(' and the ')} so your family files every form, not just the PF claim.`, go:()=>{modal(mAsset(miss[0]));bindModal();}});
+  }
   if(S.reporters.length<2) g.push({sev:'warn', t:'Fewer than two death reporters set', s:'Disclosure needs two independent reports. Set these up or it cannot trigger.', go:()=>{S.view='r-safeguards';render();}});
   return g.sort((a,b)=>(a.sev==='bad'?0:1)-(b.sev==='bad'?0:1));
+}
+
+/* ============================ succession ============================ */
+/* Default (intestate) shares among the people the holder has added. Simplified: it assumes everyone listed is alive,
+   ignores predeceased children's lines, and covers the main rule of each law. It is guidance, not legal advice. */
+const LAWS = {
+  hindu:{n:'Hindu, Sikh, Jain or Buddhist', act:'Hindu Succession Act, 1956'},
+  muslim:{n:'Muslim', act:'Muslim personal law (Shariat Application Act, 1937)'},
+  christian:{n:'Christian, or a civil marriage', act:'Indian Succession Act, 1925'},
+  parsi:{n:'Parsi', act:'Indian Succession Act, 1925 (Parsi rules)'}
+};
+function heirShares(law, gender, people){
+  const by=r=>people.filter(p=>p.rel===r);
+  const spouse=by('Spouse'), kids=[...by('Son'),...by('Daughter')], mother=by('Mother'), father=by('Father'), sibs=[...by('Brother'),...by('Sister')];
+  const out=new Map(); const give=(list,amt)=>list.forEach(p=>out.set(p.id,(out.get(p.id)||0)+amt/list.length));
+  if(law==='hindu'){
+    const cls1 = gender==='female' ? [...spouse,...kids] : [...spouse,...kids,...mother];
+    if(cls1.length) cls1.forEach(p=>out.set(p.id,1/cls1.length));
+    else if(gender==='female'&&(mother.length||father.length)) give([...mother,...father],1);
+    else if(father.length) give(father,1);
+    else if(sibs.length) give(sibs,1);
+  } else if(law==='christian'){
+    if(spouse.length&&kids.length){ give(spouse,1/3); give(kids,2/3); }
+    else if(spouse.length){ const kin=father.length?father:[...mother,...sibs]; if(kin.length){give(spouse,1/2); give(kin,1/2);} else give(spouse,1); }
+    else if(kids.length) give(kids,1);
+    else if(father.length) give(father,1);
+    else if(mother.length||sibs.length) give([...mother,...sibs],1);
+  } else if(law==='parsi'){
+    if(kids.length){ const units=spouse.length+kids.length+(mother.length+father.length)/2;
+      [...spouse,...kids].forEach(p=>out.set(p.id,1/units)); [...mother,...father].forEach(p=>out.set(p.id,.5/units)); }
+    else if(spouse.length){ const par=[...mother,...father]; if(par.length){give(spouse,1/2); give(par,1/2);} else give(spouse,1); }
+    else if(mother.length||father.length) give([...mother,...father],1);
+    else if(sibs.length) give(sibs,1);
+  } else if(law==='muslim'){
+    const ch=kids.length>0;
+    if(spouse.length) give(spouse, gender==='female' ? (ch?1/4:1/2) : (ch?1/8:1/4));
+    if(mother.length) give(mother, ch?1/6:1/3);
+    if(father.length&&ch) give(father,1/6);
+    const fixed=[...out.values()].reduce((s,v)=>s+v,0);
+    const sons=by('Son'), daus=by('Daughter');
+    if(sons.length){ const units=sons.length*2+daus.length, rest=Math.max(0,1-fixed);
+      sons.forEach(p=>out.set(p.id,rest*2/units)); daus.forEach(p=>out.set(p.id,rest/units)); }
+    else { if(daus.length) give(daus, daus.length>1?2/3:1/2);
+      const left=1-[...out.values()].reduce((s,v)=>s+v,0);
+      if(left>0&&father.length) give(father,left); else if(left>0&&!out.size&&sibs.length) give(sibs,left); }
+    const tot=[...out.values()].reduce((s,v)=>s+v,0);
+    if(tot>0) out.forEach((v,k)=>out.set(k,v/tot));
+  }
+  return people.map(p=>({...p, share:out.get(p.id)||0}));
+}
+const pctStr = v => v>0 ? (Math.round(v*1000)/10)+'%' : '—';
+function heirs(){ return heirShares(S.succ.law, S.succ.gender, S.people); }
+/* holdings where the institution's nominee is not the only person the law would give it to */
+function conflicts(){
+  if(hasWill()) return [];
+  const H=heirs(), legal=H.filter(h=>h.share>0);
+  if(!legal.length) return [];
+  return S.assets.filter(a=>TYPE_OF(a.type).via==='nom'&&a.nomAtInst==='yes'&&a.nomPerson).map(a=>{
+    const nom=H.find(h=>h.id===a.nomPerson); if(!nom) return null;
+    if(nom.share>=0.999 || beneficialNominee(a, nom)) return null;
+    return {asset:a, nominee:nom, others:legal.filter(h=>h.id!==nom.id), notHeir:nom.share===0};
+  }).filter(Boolean);
 }
 
 /* ============================ leads ============================ */
@@ -430,8 +687,32 @@ function buildLeads(){
   if(a.shares==='Yes, and I have papers') add('iepf','demat','Shares — certificates in hand','You have the paperwork. Shares unclaimed for seven years transfer to the IEPF.',94);
   else if(a.shares==='Yes, but I have no papers') add('iepf','demat','Shares — no paperwork','Search the IEPF by name. Old employer shares and IPO allotments commonly land there.',78);
   else if(a.shares==='I don’t know') add('iepf','demat','Possible shareholding','A name search costs nothing and the IEPF holds a very large pool.',55);
-  if((a.emp||'').trim()) (a.emp||'').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).forEach(e=>add('epfo','epf','Provident fund — '+e,'Each employer usually means a separate EPF member ID, often never merged.',88));
+  const emps=(a.emp||'').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+  if(emps.length) emps.forEach(e=>add('epfo','epf','Provident fund — '+e,'Each employer usually means a separate EPF member ID, often never merged.',88));
   else add('epfo','epf','Provident fund','Almost every salaried person has one. Inoperative accounts are very common.',66);
+  const pvt = emps.length>0 || a.work==='Salaried, private sector';
+  if(pvt){
+    add('epfo','eps','EPS-95 family pension','A monthly pension for the spouse for life, and for the children. Claimed on Form 10D. The benefit families most often miss.',93);
+    add('epfo','edli','EDLI insurance','₹2.5 lakh to ₹7 lakh of life cover that comes with every EPF account, with no premium paid. Claimed on Form 5IF.',91);
+    add('','gratuity','Gratuity and final dues'+(emps.length?' — '+emps[emps.length-1]:''),'Gratuity, leave encashment, last salary and any group insurance from the last employer. One letter to HR covers all four.',82);
+  }
+  if(['Central or state government','Defence or railways','Retired, drawing a pension'].includes(a.work)){
+    add('','govpen','Family pension','Usually the largest single benefit a government employee or pensioner leaves. Claimed at the pension bank or head of office.',96);
+    if(a.work!=='Retired, drawing a pension') add('nps','nps','NPS account','Government staff who joined after 2004 are almost all on NPS. The whole corpus goes to the nominee.',85);
+  }
+  if(a.work==='Self-employed or business') add('nps','nps','Possible NPS or Atal Pension Yojana','Common among the self-employed. Ask their bank whether an APY debit appears on statements.',58);
+  if(a.work!=='Did not work outside home') add('','pmjjby','PMJJBY / PMSBY cover','Look for a yearly debit labelled PMJJBY or PMSBY on their bank statement. Each pays ₹2 lakh and is very often unclaimed.',76);
+  if(a.gold==='Yes, a bank locker') add('','locker','Bank locker','Contents are released after a joint inventory at the branch. Ask every bank they used, not just the main one.',89);
+  else if(a.gold==='Yes, at home') add('','gold','Gold and jewellery at home','There is no register. Write down what exists and agree a family settlement before anything is divided.',62);
+  else if(a.gold==='Gold bonds or digital gold') add('','sgb','Sovereign Gold Bonds or digital gold','SGBs are held by the RBI and show in their CAS or bank statements as half-yearly interest.',84);
+  else if(a.gold==='I don’t know') add('','locker','Possible bank locker','Ask each bank they used. Locker rent debits on statements are the giveaway.',52);
+  if(a.prop==='Yes, in their name'||a.prop==='Yes, jointly') add('land','property','Land, house or flat','Mutation into the heirs’ names. Until it is done, nobody can sell, mortgage or receive compensation for it.',90);
+  else if(a.prop==='Ancestral, never transferred') add('land','property','Ancestral property','Still in an earlier generation’s name. The most common source of family disputes. Start mutation now, with every heir.',86);
+  else if(a.prop==='I don’t know') add('land','property','Possible landholding','Most state land-record portals can be searched by owner name and village.',54);
+  if(a.veh==='Yes') add('vahan','vehicle','Vehicle','Transfer the registration at the RTO on Form 31 within three months.',70);
+  if(a.loan==='Yes'||a.loan==='I think so') add('cibil','loan','Loans and credit cards','Pull their credit report to list every lender. Check each one for loan protection insurance before paying.',80);
+  else if(a.loan==='I don’t know') add('cibil','loan','Check for loans','A credit report shows every loan and card, and often insurance attached to them.',57);
+  add('clp','bank','Common Landing Portal search','One search across unclaimed deposits, insurance, shares, dividends and mutual funds. Launched by the Finance Ministry in May 2026.',87);
   if(a.post==='Yes') add('post','post','Post office savings, NSC or KVP','You said these exist. They are rarely tracked digitally.',80);
   else if(a.post==='I don’t know') add('post','post','Possible post office savings','Common among older savers in smaller towns.',48);
   add('mitra','mf','Mutual fund folios','Traced against their PAN across every AMC at once.',a.pan==='Yes'?86:58);
@@ -472,7 +753,7 @@ function chooser(){
     <div class="lead">
       <div class="eyebrow">Amanat &middot; अमानत</div>
       <h1>Nothing a family owns should be lost<br>because nobody knew it existed.</h1>
-      <p class="sub" style="max-width:520px;margin:0 auto">Around &#8377;2.2 lakh crore sits unclaimed across India&rsquo;s banks, insurers, funds and provident accounts. Most of it is not lost. It is simply unfindable by the people it belongs to.</p>
+      <p class="sub" style="max-width:520px;margin:0 auto">Around &#8377;2.2 lakh crore sits unclaimed across India&rsquo;s banks, insurers, funds and provident accounts, before counting the pensions, gold and land that pass without any record at all. Most of it is not lost. It is simply unfindable by the people it belongs to.</p>
     </div>
     <div class="pick">
       <button data-j="registry">
@@ -494,8 +775,8 @@ function chooser(){
 }
 
 const NAV = {
-  registry:[{v:'r-home',n:'Overview',i:'home'},{v:'r-assets',n:'Holdings',i:'bank'},{v:'r-people',n:'People',i:'users'},{v:'r-safeguards',n:'Safeguards',i:'lock'}],
-  recovery:[{v:'v-plan',n:'Search plan',i:'map'},{v:'v-guides',n:'Guides',i:'tax'},{v:'v-case',n:'Case file',i:'folder'},{v:'v-docs',n:'Documents',i:'file'}]
+  registry:[{v:'r-home',n:'Overview',i:'home'},{v:'r-assets',n:'Holdings',i:'bank'},{v:'r-people',n:'People',i:'users'},{v:'r-family',n:'Family & will',i:'tree'},{v:'r-safeguards',n:'Safeguards',i:'lock'}],
+  recovery:[{v:'v-plan',n:'Search plan',i:'map'},{v:'v-guides',n:'Guides',i:'tax'},{v:'v-case',n:'Case file',i:'folder'},{v:'v-docs',n:'Documents',i:'file'},{v:'v-ask',n:'Ask',i:'spark'}]
 };
 
 function shell(){
@@ -554,10 +835,77 @@ views['r-home'] = () => {
       <div class="bd"><div class="t">${esc(x.t)}</div><div class="s">${esc(x.s)}</div></div>
       <button class="btn sec sm" data-gap="${i}">Fix</button></div>`).join('')}</div>`
    :`<div class="card"><div class="row"><span style="color:var(--ok)">${ic('check',20)}</span><div><div class="t" style="font-weight:600">No gaps</div><div class="s sub">Every holding has a nominee and a registered nomination.</div></div></div></div>`}
+  ${forgottenCard()}
   <div class="card"><div class="row"><h3 style="flex:1">Simulate what happens next</h3><span class="badge mock">Demo only</span></div>
     <p class="sub" style="font-size:13px;margin:6px 0 12px">In a live product this is triggered by a verified death report from two independent people. Here you can trigger it yourself to see exactly what your family would receive.</p>
     ${S.event? eventBox() : `<button class="btn sec" data-act="sim" ${S.assets.length?'':'disabled'}>Run the disclosure simulation</button>`}
   </div>`;
+};
+
+function forgottenCard(){
+  const miss=FORGOTTEN.filter(k=>!S.assets.some(a=>a.type===k));
+  if(!miss.length) return '';
+  return `<div class="card"><h3>Commonly forgotten</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">These are the holdings families most often never claim, because nobody wrote them down. Add any that apply to you.</p>
+    <div class="chips">${miss.map(k=>`<button class="badge" data-add-type="${k}" style="cursor:pointer;padding:5px 10px">${ic('plus',12)} ${esc(TYPE_LABEL[k])}</button>`).join('')}</div></div>`;
+}
+
+views['r-family'] = () => {
+  const s=S.succ, H=heirs(), legal=H.filter(h=>h.share>0), C=conflicts();
+  const willOnly=S.assets.filter(a=>TYPE_OF(a.type).via==='will');
+  const node=(p,me)=>`<div class="node${me?' me':''}${p&&p.share>0?' heir':''}"><b>${esc(me?(S.profile.name||'You'):p.name)}</b>
+    <span>${me?'Holder':esc(p.rel)}</span>${me?'':`<i class="badge ${p.share>0?'':'mock'}">${p.share>0?pctStr(p.share):'Not an heir'}</i>`}</div>`;
+  const g=r=>H.filter(h=>r.includes(h.rel));
+  const parents=g(['Mother','Father']), spouse=g(['Spouse']), kids=g(['Son','Daughter']), sibs=g(['Brother','Sister']), rest=H.filter(h=>!['Mother','Father','Spouse','Son','Daughter','Brother','Sister'].includes(h.rel));
+  return `<h1>Family &amp; will</h1>
+  <p class="sub" style="margin:6px 0 16px;max-width:600px">A nominee is not an owner. Since the Supreme Court&rsquo;s 2023 ruling in <i>Shakti Yezdani v. Jayanand Salgaonkar</i>, a nominee receives a holding and holds it for your legal heirs. Who actually keeps it is decided by your will or, without one, by succession law.</p>
+  <div class="card"><div class="grid-3">
+    <div class="field"><label>Personal law that applies</label><select id="sc-law">${Object.entries(LAWS).map(([k,v])=>`<option value="${k}" ${s.law===k?'selected':''}>${v.n}</option>`).join('')}</select></div>
+    <div class="field"><label>You are</label><select id="sc-gender"><option value="male" ${s.gender==='male'?'selected':''}>Male</option><option value="female" ${s.gender==='female'?'selected':''}>Female</option></select></div>
+    <div class="field"><label>Your will</label><select id="sc-will">${[['none','No will'],['draft','Drafted, not signed'],['signed','Signed with two witnesses'],['registered','Signed and registered']].map(([k,v])=>`<option value="${k}" ${s.will===k?'selected':''}>${v}</option>`).join('')}</select></div>
+  </div><p class="tiny">${esc(LAWS[s.law].act)}</p></div>
+
+  <div class="card"><div class="row"><h3 style="flex:1">Who inherits if there is no will</h3><span class="badge ${hasWill()?'ok':'warn'}">${hasWill()?'Your will overrides this':'This applies to you today'}</span></div>
+    <p class="sub" style="font-size:13px;margin:4px 0 14px">Worked out from the people you have added. Add your parents and every child, including married daughters, for a true picture.</p>
+    ${S.people.length?`<div class="tree">
+      ${parents.length?`<div class="gen">${parents.map(p=>node(p)).join('')}</div>`:''}
+      <div class="gen">${node(null,true)}${spouse.map(p=>node(p)).join('')}${sibs.length?`<span class="tsep"></span>${sibs.map(p=>node(p)).join('')}`:''}</div>
+      ${kids.length?`<div class="gen">${kids.map(p=>node(p)).join('')}</div>`:''}
+      ${rest.length?`<div class="gen others">${rest.map(p=>node(p)).join('')}</div>`:''}
+    </div>`:`<div class="empty"><p class="sub">Add your family in People to see this.</p><button class="btn sec sm" data-v="r-people" style="margin-top:10px">Go to People</button></div>`}
+    <div class="note" style="margin-top:14px"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span><div>${
+      s.law==='muslim'?'<b>Muslim law limits a will to one-third of the estate</b> unless the other heirs consent. Shares shown are the main Sunni (Hanafi) rule and are approximate. Shia rules differ.'
+      :s.law==='hindu'?'<b>Daughters have equal rights</b>, married or not (2005 amendment). Ancestral (coparcenary) property follows separate rules not shown here.'
+      :'Shares shown follow the main rule of the Act and assume everyone listed is alive.'} This is guidance, not legal advice.</div></div>
+  </div>
+
+  <div class="card"><h3>Where your nominees and the law disagree</h3>
+    ${C.length?`<p class="sub" style="font-size:13px;margin:4px 0 4px">Each of these goes to the nominee first, who then has to share it. If you want the nominee to keep it, say so in your will.</p>
+      ${C.map(c=>`<div class="item"><div class="ico" style="background:var(--amber-bg);color:var(--amber)">${ic('alert')}</div><div class="bd">
+        <div class="t">${esc(aLabel(c.asset))} &rarr; ${esc(c.nominee.name)}</div>
+        <div class="s">${c.notHeir?`${esc(c.nominee.name)} is not a legal heir at all under ${esc(LAWS[s.law].act)}, so they would have to hand all of it over.`
+          :`${esc(c.nominee.name)} is entitled to ${pctStr(c.nominee.share)}. ${c.others.map(o=>esc(o.name)+' ('+pctStr(o.share)+')').join(', ')} can claim the rest.`}</div></div></div>`).join('')}`
+    :`<div class="row" style="margin-top:6px"><span style="color:var(--ok)">${ic('check',18)}</span><span class="sub">${hasWill()?'Your will decides who keeps each holding, so nominees act only as custodians.':S.assets.some(a=>a.nomPerson)?'Every recorded nominee either keeps the holding by law or is your sole heir for it.':'Record who the nominee is at each institution (in Holdings) to check this.'}</span></div>`}
+    <p class="tiny" style="margin-top:10px">Not counted as conflicts: life insurance naming a spouse, parent or child, who keep the money outright (Insurance Act s.39, as amended in 2015), and EPS pension, EDLI and government family pension, which are paid to the family by statute.</p>
+  </div>
+
+  <div class="card"><h3>What only a will can move</h3>
+    ${willOnly.length?willOnly.map(a=>`<div class="item"><div class="ico">${ic(TYPE_ICON[a.type]||'file')}</div><div class="bd"><div class="t">${esc(aLabel(a))}</div>
+      <div class="s">${hasWill()?'Covered by your will. Name it specifically so there is no doubt.':'No nominee system exists for this. Without a will it is divided by succession law.'}</div></div>
+      <span class="badge ${hasWill()?'ok':'bad'}">${hasWill()?'Covered':'Not covered'}</span></div>`).join('')
+      :'<p class="sub" style="font-size:13px;margin-top:4px">Land, gold and digital assets have no nomination system. Record them in Holdings to see whether your will covers them.</p>'}
+  </div>
+
+  <div class="card"><h3>Making a will that holds up</h3>
+    <ul class="ck" style="margin-top:6px">
+      ${[['Written and signed by you, with two witnesses who are not beneficiaries','Indian Succession Act, s.63'],
+         ['Name each nominee as the beneficiary too, where you want them to keep the holding','Closes the gap the Supreme Court identified in 2023'],
+         ['List land, gold, lockers and digital accounts specifically','These have no nominee and are where disputes start'],
+         ['Name an executor','Someone with authority to apply for probate and deal with institutions'],
+         ['Registration is optional but makes forgery claims much harder','Registration Act, s.18'],
+         ['If you live in Mumbai, Kolkata or Chennai, your heirs will need probate','Indian Succession Act, s.57'],
+         ['Tell your executor where the original is kept','A will nobody can find is no will']].map(([t,s2])=>`<li><span style="color:var(--blue-deep);flex-shrink:0">${ic('check',15)}</span><div><b>${t}</b><div class="tiny">${s2}</div></div></li>`).join('')}
+    </ul></div>`;
 };
 
 function ringSvg(pct){
@@ -589,11 +937,14 @@ views['r-assets'] = () => `
     <button class="btn" data-act="add-asset">${ic('plus',15)} Add</button></div>
   ${S.assets.length? `<div class="card">${S.assets.map(a=>{
       const ls=S.links.filter(l=>l.asset===a.id);
-      return `<div class="item"><div class="ico">${ic(a.type==='bank'?'bank':a.type==='epf'?'shield':a.type==='demat'?'chart':'file')}</div>
+      const via=TYPE_OF(a.type).via, np=S.people.find(p=>p.id===a.nomPerson);
+      return `<div class="item"><div class="ico">${ic(TYPE_ICON[a.type]||'file')}</div>
       <div class="bd"><div class="t">${esc(a.inst)}</div>
         <div class="s">${TYPE_LABEL[a.type]||a.type}${a.ref?' &middot; '+esc(a.ref):' &middot; no identifier recorded'}</div>
         <div class="chips">
-          ${a.nomAtInst==='yes'?'<span class="badge ok">Nominated at institution</span>':a.nomAtInst==='no'?'<span class="badge bad">No nomination registered</span>':'<span class="badge warn">Nomination status unknown</span>'}
+          ${via==='will'?(hasWill()?'<span class="badge ok">Covered by your will</span>':'<span class="badge bad">No nominee possible &mdash; needs a will</span>')
+           :via==='debt'?'<span class="badge warn">Liability &mdash; family should know</span>'
+           :a.nomAtInst==='yes'?`<span class="badge ok">Nominated at institution${np?' &middot; '+esc(np.name):''}</span>`:a.nomAtInst==='no'?'<span class="badge bad">No nomination registered</span>':'<span class="badge warn">Nomination status unknown</span>'}
           ${ls.length? ls.map(l=>{const p=S.people.find(p=>p.id===l.person);return `<span class="badge">${esc(p?p.name:'?')} &middot; ${esc(l.scope)}</span>`}).join('') : '<span class="badge bad">No nominee designated</span>'}
         </div></div>
       <div style="display:flex;flex-direction:column;gap:6px">
@@ -660,12 +1011,16 @@ views['r-inbox'] = () => {
     if(!ls.length) return '';
     return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="ico" style="width:32px;height:32px;border-radius:8px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center">${ic('users',16)}</div>
       <div><b style="font-size:14px">${esc(per.name)}</b><div class="tiny">${esc(per.rel)} &middot; sees ${ls.length} of ${S.assets.length} holdings</div></div></div>
-      ${ls.map(l=>{const a=S.assets.find(a=>a.id===l.asset); if(!a) return ''; const po=TYPES.find(t=>t.k===a.type);
-        return `<div class="item"><div class="ico">${ic('bank')}</div><div class="bd">
+      ${ls.map(l=>{const a=S.assets.find(a=>a.id===l.asset); if(!a) return ''; const po=TYPE_OF(a.type), cl=CLAIM[a.type];
+        return `<div class="item"><div class="ico">${ic(TYPE_ICON[a.type]||'bank')}</div><div class="bd">
           <div class="t">${esc(a.inst)}</div><div class="s">${TYPE_LABEL[a.type]}${a.ref?' &middot; '+esc(a.ref):''}</div>
           <div class="chips"><span class="badge">${esc(l.scope)}</span>
-          ${a.nomAtInst==='yes'?'<span class="badge ok">Nominated — short claim route</span>':'<span class="badge bad">Not nominated — needs a legal heir certificate</span>'}</div>
-          <div class="tiny" style="margin-top:6px">Next step: ${a.nomAtInst==='yes'?'approach '+esc(a.inst)+' with the death certificate and your KYC.':'obtain a legal heir certificate, then approach '+esc(a.inst)+'. Search '+(po?po.portal:'the relevant portal')+' if the holding has already been classified unclaimed.'}</div>
+          ${po.via==='will'?(hasWill()?'<span class="badge ok">Passes under the will</span>':'<span class="badge bad">No will — succession law decides</span>')
+           :po.via==='debt'?'<span class="badge warn">Liability — inform the lender</span>'
+           :a.nomAtInst==='yes'?'<span class="badge ok">Nominated — short claim route</span>':'<span class="badge bad">Not nominated — needs a legal heir certificate</span>'}</div>
+          <div class="tiny" style="margin-top:6px">Next step: ${po.via!=='nom'&&cl?esc(cl.next)
+            :a.nomAtInst==='yes'?'approach '+esc(a.inst)+' with the death certificate and your KYC.'+(cl?' '+esc(cl.forms[0])+'.':'')
+            :'obtain a legal heir certificate, then approach '+esc(a.inst)+'. Search '+esc(po.portal)+' if the holding has already been classified unclaimed.'}</div>
         </div></div>`}).join('')}</div>`}).join('')||'<div class="card"><div class="empty"><h3>Nothing designated</h3><p class="sub">Designate at least one holding to a person to see this view.</p></div></div>'}`;
 };
 
@@ -716,11 +1071,11 @@ views['v-plan'] = () => {
 
 function leadCard(l){
   const p=PORTAL_OF(l.portal);
-  const where = l.fromReg ? l.label+' \u2014 claim directly' : l.portal==='tax'?'Tax records (AIS and Form 26AS)':l.portal==='email'?'Their email inbox':p?p.n:l.portal;
+  const where = l.fromReg ? l.label+' \u2014 claim directly' : l.portal==='tax'?'Tax records (AIS and Form 26AS)':l.portal==='email'?'Their email inbox':p?p.n:TYPE_OF(l.type).portal||l.portal;
   const sev = l.score>=90?'':l.score>=70?'warn':'mock';
   return `<div class="lead-card"><div class="hd">
     <div class="ico" style="width:32px;height:32px;border-radius:8px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      ${ic(l.portal==='tax'?'tax':l.portal==='email'?'mail':l.portal==='epfo'?'shield':l.portal==='iepf'?'chart':'bank',16)}</div>
+      ${ic(l.portal==='tax'?'tax':l.portal==='email'?'mail':TYPE_ICON[l.type]||'bank',16)}</div>
     <div style="flex:1;min-width:0">
       <div class="row" style="gap:7px;flex-wrap:wrap"><b style="font-size:13.5px">${esc(l.label)}</b>
         ${l.fromReg?'<span class="badge ok">From their registry</span>'+(l.nomAtInst==='yes'?'<span class="badge">Short claim route</span>':'<span class="badge bad">Needs legal heir certificate</span>'):`<span class="badge ${sev}">${l.score>=90?'Strong lead':l.score>=70?'Worth checking':'Long shot'}</span>`}</div>
@@ -742,6 +1097,7 @@ function leadCard(l){
        :l.portal==='email'?`<button class="btn sec sm" data-guide="evidence">Open the search-term kit</button>`
        :p?`<a class="lk" href="${p.url}" target="_blank" rel="noopener">${ic('ext',13)} Open ${esc(p.n)}</a>
           <button class="btn sec sm" data-portal="${p.id}">What you need</button>`:''}
+      ${CLAIM[l.type]&&l.portal!=='clp'?`<button class="btn sec sm" data-route="${l.type}">How to claim</button>`:''}
       <button class="btn sec sm" data-ref="${l.id}">${l.ref?'Edit':'Add'} reference</button>
     </div></div>`;
 }
@@ -749,14 +1105,184 @@ function leadCard(l){
 views['v-guides'] = () => {
   const t=S.guideTab;
   return `<h1>Guides</h1>
-  <p class="sub" style="margin:6px 0 14px">The three routes that find holdings no portal search will.</p>
+  <p class="sub" style="margin:6px 0 14px">Routes that find holdings no portal search will, live lookups, and where to escalate when an institution stalls.</p>
   <div class="seg" style="margin-bottom:16px;width:fit-content;max-width:100%;overflow-x:auto">
     <button data-gt="trace" aria-pressed="${t==='trace'}">Tax records</button>
     <button data-gt="evidence" aria-pressed="${t==='evidence'}">Evidence kit</button>
     <button data-gt="portals" aria-pressed="${t==='portals'}">Portals</button>
+    <button data-gt="live" aria-pressed="${t==='live'}">Live lookups</button>
+    <button data-gt="escalate" aria-pressed="${t==='escalate'}">Escalate</button>
   </div>
-  ${t==='trace'?guideTrace():t==='evidence'?guideEvidence():guidePortals()}`;
+  ${t==='trace'?guideTrace():t==='evidence'?guideEvidence():t==='live'?guideLive():t==='escalate'?guideEscalate():guidePortals()}`;
 };
+
+/* ---------- live public APIs (no keys, CORS-open) ---------- */
+async function getJSON(url){
+  const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),9000);
+  try{ const r=await fetch(url,{signal:ctl.signal}); if(!r.ok) return {ok:false,status:r.status}; return {ok:true,data:await r.json()}; }
+  catch(e){ return {ok:false,status:0}; } finally{ clearTimeout(t); }
+}
+const netMsg = what => 'Could not reach '+what+'. If you are viewing Amanat inside claude.ai, its security rules block outside lookups: open the standalone version (index.html on any web host) to use them. Otherwise, try again in a moment.';
+async function lookupIFSC(code){
+  code=String(code||'').trim().toUpperCase();
+  if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(code)) return {ok:false,msg:'An IFSC is 11 characters: four letters, a zero, then six letters or digits.'};
+  const r=await getJSON('https://ifsc.razorpay.com/'+code);
+  if(r.ok) return {ok:true,data:r.data};
+  return {ok:false,msg:r.status===404?'No branch has that IFSC. Check it against a cheque leaf or passbook.':netMsg('the IFSC directory')};
+}
+async function lookupPin(pin){
+  pin=String(pin||'').replace(/\D/g,'');
+  if(pin.length!==6) return {ok:false,msg:'A PIN code has six digits.'};
+  const r=await getJSON('https://api.postalpincode.in/pincode/'+pin);
+  const d=r.ok&&Array.isArray(r.data)?r.data[0]:null;
+  if(d&&d.Status==='Success'&&d.PostOffice&&d.PostOffice.length) return {ok:true,data:d.PostOffice};
+  return {ok:false,msg:r.ok?'No post offices found for that PIN code.':netMsg('the PIN code directory')};
+}
+async function searchMF(q){
+  q=String(q||'').trim(); if(q.length<3) return {ok:false,msg:'Type at least three letters of the scheme name.'};
+  const r=await getJSON('https://api.mfapi.in/mf/search?q='+encodeURIComponent(q));
+  if(r.ok&&Array.isArray(r.data)) return {ok:true,data:r.data.slice(0,8)};
+  return {ok:false,msg:netMsg('the mutual fund directory')};
+}
+/* which registrar services an AMC's folios: decides where a transmission request goes */
+const RTA = {CAMS:['HDFC','ICICI','SBI','Aditya Birla','Kotak','DSP','Franklin','Tata','Bandhan','HSBC','Invesco','PGIM','Bank of India','Canara Robeco','Mahindra','Union','Whiteoak','Navi','Quant','LIC','Sundaram','Baroda'],
+  KFintech:['Nippon','Axis','Mirae','UTI','Motilal','Edelweiss','Quantum','JM','Taurus','Shriram','ITI','Trust','NJ','Groww','Samco','360 ONE','Helios','Old Bridge','Zerodha','PPFAS','Parag Parikh']};
+const rtaOf = name => { for(const [k,v] of Object.entries(RTA)) if(v.some(a=>name.toLowerCase().includes(a.toLowerCase()))) return k; return null; };
+/* every state's land-record portal sits behind DILRMP; these are the most used ones */
+const LAND = {'Maharashtra':['Mahabhumi (7/12)','https://bhulekh.mahabhumi.gov.in/'],'Uttar Pradesh':['UP Bhulekh (khatauni)','https://upbhulekh.gov.in/'],'Karnataka':['Bhoomi (RTC)','https://landrecords.karnataka.gov.in/'],
+  'Tamil Nadu':['Patta Chitta','https://eservices.tn.gov.in/'],'Rajasthan':['Apna Khata','https://apnakhata.rajasthan.gov.in/'],'Bihar':['Bihar Bhumi','https://biharbhumi.bihar.gov.in/'],
+  'Madhya Pradesh':['MP Bhulekh','https://mpbhulekh.gov.in/'],'Gujarat':['AnyRoR','https://anyror.gujarat.gov.in/'],'Telangana':['Bhu Bharati','https://bhubharati.telangana.gov.in/'],
+  'Andhra Pradesh':['Meebhoomi','https://meebhoomi.ap.gov.in/'],'West Bengal':['Banglarbhumi','https://banglarbhumi.gov.in/'],'Haryana':['Jamabandi','https://jamabandi.nic.in/'],'Punjab':['PLRS Jamabandi','https://jamabandi.punjab.gov.in/'],
+  'Odisha':['Bhulekh Odisha','https://bhulekh.ori.nic.in/'],'Kerala':['e-Rekha','https://erekha.kerala.gov.in/'],'Delhi':['Delhi Land Records','https://dlrc.delhigovt.nic.in/']};
+
+function liveOut(id){ return S.live&&S.live[id]||''; }
+function guideLive(){
+  return `<div class="card"><div class="row"><h2 style="flex:1">Live lookups</h2><span class="badge live-badge">Live data</span></div>
+    <p class="sub" style="font-size:13px;margin-top:4px">These query public Indian directories in real time. Nothing you type is stored by Amanat.</p></div>
+  <div class="card"><h3>Find the branch to claim at</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">The IFSC is printed on every cheque leaf and passbook. It tells you exactly which branch holds the account, which is where the claim is filed.</p>
+    <div class="inline"><input id="lv-ifsc" class="fi" maxlength="11" placeholder="e.g. SBIN0000300" style="text-transform:uppercase;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm)"><button class="btn" data-live="ifsc">Look up</button></div>
+    <div id="lv-ifsc-out">${liveOut('ifsc')}</div></div>
+  <div class="card"><h3>Where they lived: post offices and land records</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">Enter the PIN code of a place they lived or owned land. You get the head post office for savings claims, and the state portal where the land record can be searched.</p>
+    <div class="inline"><input id="lv-pin" maxlength="6" placeholder="e.g. 440010" style="padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm)"><button class="btn" data-live="pin">Look up</button></div>
+    <div id="lv-pin-out">${liveOut('pin')}</div></div>
+  <div class="card"><h3>Identify a mutual fund from a statement or e-mail</h3>
+    <p class="sub" style="font-size:13px;margin:4px 0 10px">Type part of a scheme name you found. We tell you the fund house and which registrar takes the transmission request.</p>
+    <div class="inline"><input id="lv-mf" placeholder="e.g. Nippon small cap" style="padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm)"><button class="btn" data-live="mf">Search</button></div>
+    <div id="lv-mf-out">${liveOut('mf')}</div></div>
+  <div class="note"><span style="flex-shrink:0;color:var(--blue-deep)">${ic('alert',16)}</span><div><b>What cannot be automated yet.</b> UDGAM, IEPF, Bima Bharosa, EPFO and the Common Landing Portal have no public API, and pulling actual holdings needs Account Aggregator (FIU) registration. Those stay as guided links.</div></div>`;
+}
+async function runLive(kind){
+  S.live=S.live||{};
+  const box=el.querySelector('#lv-'+kind+'-out'), inp=el.querySelector('#lv-'+kind);
+  if(!box||!inp) return;
+  box.innerHTML='<div class="live tiny">Looking up…</div>';
+  let html='';
+  if(kind==='ifsc'){
+    const r=await lookupIFSC(inp.value);
+    if(!r.ok) html=`<div class="live">${esc(r.msg)}</div>`;
+    else { const b=r.data, addr=[b.ADDRESS,b.CITY,b.STATE].filter(Boolean).join(', ');
+      html=`<div class="live"><div class="row"><b>${esc(b.BANK)}</b><span class="badge">${esc(b.BRANCH)}</span><span class="badge live-badge">Live</span></div>
+        <div class="sub" style="margin-top:4px">${esc(addr)}</div>
+        <div class="row" style="margin-top:8px;gap:12px"><span class="tiny">IFSC <b class="mono">${esc(b.IFSC)}</b></span>${b.MICR?`<span class="tiny">MICR <b class="mono">${esc(b.MICR)}</b></span>`:''}${b.CONTACT?`<span class="tiny">Phone ${esc(b.CONTACT)}</span>`:''}
+          <a class="lk" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.BANK+' '+b.BRANCH+' '+addr)}">${ic('ext',13)} Map</a></div>
+        ${S.leads.length?`<button class="btn sec sm" style="margin-top:10px" data-live-add="${esc(b.BANK)}|${esc(b.BRANCH)}|${esc(b.IFSC)}">Add this branch to the search plan</button>`:''}</div>`; }
+  } else if(kind==='pin'){
+    const r=await lookupPin(inp.value);
+    if(!r.ok) html=`<div class="live">${esc(r.msg)}</div>`;
+    else { const po=r.data, st=po[0].State, ho=po.find(p=>/Head/.test(p.BranchType))||po[0], land=LAND[st];
+      html=`<div class="live"><div class="row"><b>${esc(po[0].District)}, ${esc(st)}</b><span class="badge live-badge">Live</span></div>
+        <div class="sub" style="margin-top:4px">${po.length} post office${po.length>1?'s':''} in this PIN code: ${po.slice(0,6).map(p=>esc(p.Name)).join(', ')}${po.length>6?'…':''}</div>
+        <div class="hr" style="margin:10px 0"></div>
+        <div class="tiny">Savings claims (Form 11) go to the office that holds the account. If unsure, start at <b style="color:var(--ink-2)">${esc(ho.Name)} (${esc(ho.BranchType)})</b>, ${esc(ho.Division)} division.</div>
+        <div class="row" style="margin-top:8px"><span class="tiny">Land records for ${esc(st)}:</span>
+          ${land?`<a class="lk" target="_blank" rel="noopener" href="${land[1]}">${ic('ext',13)} ${esc(land[0])}</a>`:`<a class="lk" target="_blank" rel="noopener" href="https://dilrmp.gov.in/">${ic('ext',13)} State portal via DILRMP</a>`}</div></div>`; }
+  } else if(kind==='mf'){
+    const r=await searchMF(inp.value);
+    if(!r.ok) html=`<div class="live">${esc(r.msg)}</div>`;
+    else if(!r.data.length) html='<div class="live">No scheme matches that name. Try fewer words.</div>';
+    else html=`<div class="live"><div class="row" style="margin-bottom:6px"><b>${r.data.length} matching scheme${r.data.length>1?'s':''}</b><span class="badge live-badge">Live</span></div>
+      ${r.data.map(s=>{const rta=rtaOf(s.schemeName); return `<div class="item" style="padding:8px 0"><div class="bd"><div class="t" style="font-size:13px">${esc(s.schemeName)}</div>
+        <div class="tiny">AMFI code ${esc(s.schemeCode)} &middot; transmission via ${rta?`<b style="color:var(--ink-2)">${rta}</b>`:'the AMC’s registrar'} or MF Central</div></div></div>`}).join('')}</div>`;
+  }
+  S.live[kind]=html; box.innerHTML=html;
+  box.querySelectorAll('[data-live-add]').forEach(b=>b.onclick=()=>{
+    const [bank,branch,ifsc]=b.dataset.liveAdd.split('|');
+    S.leads.unshift({id:uid(),portal:'udgam',type:'bank',label:bank+' — '+branch,why:'Branch identified from a cheque or passbook. File the claim here.',score:95,status:'found',ref:'IFSC '+ifsc,note:''});
+    logit('Branch added from IFSC: '+bank+' '+branch); save(); toast('Added to the search plan');
+  });
+}
+
+function guideEscalate(){
+  return `<div class="card"><h2>If they don&rsquo;t respond</h2>
+    <p class="sub" style="font-size:13px;margin-top:4px">Every regulator runs a free complaint route, and institutions respond faster once one is filed. Complain to the institution first, in writing, and keep the reference. Then escalate here.</p></div>
+  ${ESCALATE.map(e=>`<div class="card"><div class="row" style="align-items:flex-start;gap:12px">
+    <div class="ico" style="width:34px;height:34px;border-radius:9px;background:var(--blue-tint);color:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic('alert',16)}</div>
+    <div style="flex:1"><h3>${esc(e.n)}</h3><div class="tiny" style="margin-top:2px">${esc(e.who)}</div>
+      <p class="sub" style="font-size:13px;margin-top:6px">${esc(e.when)}</p>
+      <a class="lk" style="margin-top:8px" href="${e.url}" target="_blank" rel="noopener">${ic('ext',13)} Open ${esc(e.n.split(',')[0])}</a></div></div></div>`).join('')}
+  <div class="card"><h3>Timelines you can quote</h3><div class="scroll-x"><table><thead><tr><th>Institution</th><th>Rule</th></tr></thead><tbody>
+    <tr><td><b>Banks</b></td><td class="sub">Settle a complete deceased claim within 15 days; no succession certificate up to at least &#8377;15 lakh (RBI directions, September 2025)</td></tr>
+    <tr><td><b>Life insurers</b></td><td class="sub">Settle within 15 days of complete documents where no investigation is needed (IRDAI master circular, 2024)</td></tr>
+    <tr><td><b>Employers</b></td><td class="sub">Pay gratuity within 30 days of the claim (Payment of Gratuity Act)</td></tr>
+    <tr><td><b>RTO</b></td><td class="sub">Apply for vehicle transfer within three months of death (Form 31)</td></tr>
+  </tbody></table></div><p class="tiny" style="margin-top:8px">Rules change. Confirm the current text on the regulator&rsquo;s site before relying on a deadline.</p></div>`;
+}
+
+function mRoute(type){
+  const c=CLAIM[type], e=ESCALATE.find(x=>x.id===c.esc);
+  return `<div class="sheet"><div class="eyebrow">How to claim</div><h2>${esc(TYPE_LABEL[type]||type)}</h2>
+    <p class="sub" style="margin:8px 0 12px">${esc(c.where)}</p>
+    <div class="eyebrow">Forms</div>
+    <ul class="ck" style="margin-bottom:10px">${c.forms.map(f=>`<li style="border:none;padding:4px 0"><span style="color:var(--blue-deep);flex-shrink:0;margin-top:2px">${ic('file',14)}</span><div>${esc(f)}</div></li>`).join('')}</ul>
+    <div class="note">${esc(c.sla)}</div>
+    ${e?`<p class="tiny" style="margin-top:10px">Stuck? Escalate to <a href="${e.url}" target="_blank" rel="noopener">${esc(e.n)}</a>.</p>`:''}
+    <div class="act"><button class="btn sec" data-close-btn>Close</button></div></div>`;
+}
+
+/* ---------- Ask: Claude, grounded in this case ---------- */
+views['v-ask'] = () => {
+  const chat=S.chat||[];
+  const sugg=['Which claim should I file first, and why?','My father had no nominee on his SBI account. What does the bank need from me?','Draft a letter to his last employer asking for gratuity, PF, EPS pension and EDLI.','The insurer has not replied in 40 days. What do I do?'];
+  return `<div class="row"><h1 style="flex:1">Ask Amanat</h1>${S.aiState==='off'?'<span class="badge mock">Unavailable here</span>':'<span class="badge live-badge">Live AI</span>'}</div>
+  <p class="sub" style="margin:6px 0 14px;max-width:600px">Ask anything about claiming what they left. Answers draw on your search plan, your documents and the rules built into Amanat, and can draft letters for you.</p>
+  ${S.aiState==='off'?`<div class="note warn"><span style="flex-shrink:0">${ic('alert',16)}</span><div>The assistant runs when this page is opened on claude.ai, where it can ask Claude. Everything else in the prototype works without it.</div></div>`:''}
+  <div class="card">
+    ${chat.length?`<div class="chat">${chat.map(m=>`<div class="${m.role==='user'?'q':'a'}">${esc(m.content)}</div>`).join('')}</div>`
+      :`<div class="chips" style="margin-bottom:12px">${sugg.map(s=>`<button class="badge" data-ask="${esc(s)}" style="cursor:pointer;padding:6px 10px;text-align:left;white-space:normal">${esc(s)}</button>`).join('')}</div>`}
+    <div class="inline" style="margin-top:8px"><textarea id="ask-in" rows="2" placeholder="Type your question" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm);resize:vertical"></textarea>
+      <button class="btn" data-act="ask" ${S.aiBusy?'disabled':''}>${S.aiBusy?'Thinking…':'Ask'}</button></div>
+    ${chat.length?`<button class="btn sec sm" data-act="ask-clear" style="margin-top:10px">Start over</button>`:''}
+  </div>
+  <p class="tiny" style="margin-top:10px">General guidance, not legal advice. For disputed or large estates, consult a lawyer.</p>`;
+};
+function caseContext(){
+  const i=S.intake||{}, leads=S.leads.map(l=>`- ${l.label} [${l.type}] status=${l.status}${l.ref?' ref='+l.ref:''}${l.fromReg?' (from their registry, nominated='+(l.nomAtInst||'?')+')':''}`).join('\n');
+  const docs=DOCS.map(d=>`- ${d.n}: ${S.docs[d.id]?'have':'missing'}`).join('\n');
+  const rules=Object.entries(CLAIM).map(([k,c])=>`${TYPE_LABEL[k]}: where=${c.where} forms=${c.forms.join('; ')} note=${c.sla}`).join('\n');
+  const esc2=ESCALATE.map(e=>`${e.n} (${e.who}): ${e.when} ${e.url}`).join('\n');
+  return `CASE\nDeceased: ${i.name||'unknown'}; asker's relationship: ${i.rel||'unknown'}; registered nominee anywhere: ${i.nom||'unknown'}; PAN available: ${i.pan||'unknown'}; work: ${i.work||'unknown'}; employers: ${i.emp||'unknown'}; cities: ${i.cities||'unknown'}.\nLEADS\n${leads||'none yet'}\nDOCUMENTS\n${docs}\n\nRULES (India, 2026)\n${rules}\n\nESCALATION\n${esc2}`;
+}
+async function askAI(q){
+  q=String(q||'').trim(); if(!q||S.aiBusy) return;
+  S.chat=[...(S.chat||[]),{role:'user',content:q}]; S.aiBusy=true; render();
+  let sample=null; try{ sample=await claude.use('sample'); }catch(e){}
+  if(!sample){ S.aiState='off'; S.aiBusy=false; S.chat.push({role:'assistant',content:'The assistant is not available in this view. Open the prototype on claude.ai to use it.'}); render(); return; }
+  const sys=`You are Amanat, a calm, practical guide helping an Indian family claim the financial assets of someone who has died. Use the case and rules below. Be specific: name the institution, the form, the documents and the order to do things in. Prefer the shortest legal route. If a fact is not in the case, ask for it or say what it depends on. Never invent form numbers, amounts or deadlines that are not in the rules; say "check with the institution" instead. When asked for a letter, write it in full, ready to send, with placeholders in [brackets]. Plain text only, no markdown headings. Keep answers under 250 words unless drafting a letter.\n\n${caseContext()}`;
+  const msgs=[{role:'user',content:sys+'\n\nReply "Understood." and wait for the question.'},{role:'assistant',content:'Understood.'},...S.chat.slice(-10)];
+  const idx=S.chat.push({role:'assistant',content:'…'})-1;
+  try{
+    await sample(msgs,{cache:false,onText:({text})=>{S.chat[idx].content=text; const a=el.querySelectorAll('.chat .a'); if(a.length) a[a.length-1].textContent=text;}});
+    S.aiState='on';
+  }catch(e){
+    S.chat[idx].content = e&&e.code==='not_granted'?'Permission to ask Claude was declined, so the assistant is off for this visit.'
+      : e&&e.code==='rate_limited'?'Too many questions in a short time. Please wait a minute and ask again.'
+      : 'Something went wrong reaching the assistant. Please try again.';
+    if(e&&e.code==='not_granted') S.aiState='off';
+  }
+  S.aiBusy=false; save(); render();
+}
 
 function guideTrace(){
   const steps=[
@@ -860,14 +1386,20 @@ views['v-case'] = () => {
   ${act.length?`<div class="card"><h3>Claim packs</h3>
     <p class="sub" style="font-size:13px;margin:4px 0 10px">For each lead you have found, this is the route and the documents that institution will ask for.</p>
     ${act.map(l=>{const nominee=l.fromReg?l.nomAtInst==='yes':S.intake.nom==='Yes, on at least one holding';
-      return `<div class="item"><div class="ico">${ic('file')}</div><div class="bd">
+      const cl=CLAIM[l.type], via=TYPE_OF(l.type).via;
+      const base=via==='will'?['death','heir']:via==='debt'?['death']:nominee?['death','pan_c','relation']:['death','pan_c','heir','indem','relation'];
+      const need=[...new Set([...base,...(cl?cl.extra:[])])];
+      return `<div class="item"><div class="ico">${ic(TYPE_ICON[l.type]||'file')}</div><div class="bd">
       <div class="t">${esc(l.label)}</div>
-      <div class="s">${nominee?'If you are the registered nominee: death certificate plus your KYC is usually enough.':'No nomination: expect a legal heir or succession certificate as well.'}</div>
-      <div class="chips">${(nominee?['death','pan_c','relation']:['death','pan_c','heir','indem','relation']).map(d=>{
-        const doc=DOCS.find(x=>x.id===d); return `<span class="badge ${S.docs[d]?'ok':'bad'}">${S.docs[d]?'✓ ':''}${esc(doc.n)}</span>`}).join('')}</div>
-      </div></div>`}).join('')}
+      <div class="s">${via==='debt'?'Inform the lender in writing. Do not pay from your own money until you know whether it was insured.'
+        :via==='will'?'Moves only under a will or by agreement of all the legal heirs.'
+        :nominee?'If you are the registered nominee: death certificate plus your KYC is usually enough.':'No nomination: expect a legal heir or succession certificate as well.'}</div>
+      ${cl?`<div class="tiny" style="margin-top:4px">File: <b style="color:var(--ink-2)">${cl.forms.map(esc).join(' · ')}</b></div>`:''}
+      <div class="chips">${need.map(d=>{
+        const doc=DOCS.find(x=>x.id===d); return doc?`<span class="badge ${S.docs[d]?'ok':'bad'}">${S.docs[d]?'✓ ':''}${esc(doc.n)}</span>`:''}).join('')}</div>
+      </div>${cl?`<button class="btn sec sm" data-route="${l.type}">Route</button>`:''}</div>`}).join('')}
     <div class="note warn" style="margin-top:10px"><span style="flex-shrink:0">${ic('alert',16)}</span>
-      <div>Thresholds vary by institution and by amount. Many banks waive the succession certificate below a limit they set themselves &mdash; always ask before paying for one.</div></div>
+      <div><b>Banks can no longer demand a succession certificate for smaller claims.</b> RBI&rsquo;s September 2025 directions require a simplified procedure up to at least &#8377;15 lakh at commercial banks (&#8377;5 lakh at co-operative banks), and settlement within 15 days of a complete claim. Quote this if a branch insists.</div></div>
   </div>`:''}`;
 };
 
@@ -913,10 +1445,9 @@ function doLookup(pan,phone){
 }
 
 function registryLeads(pid){
-  const portalOf={bank:'udgam',insurance:'bima',mf:'mitra',demat:'iepf',epf:'epfo',post:'post'};
   return S.links.filter(l=>l.person===pid).map(l=>{
     const a=S.assets.find(x=>x.id===l.asset); if(!a) return null;
-    return {id:uid(),portal:portalOf[a.type],type:a.type,label:a.inst,score:100,status:'found',note:'',fromReg:true,scope:l.scope,nomAtInst:a.nomAtInst,
+    return {id:uid(),portal:TYPE_OF(a.type).pid,type:a.type,label:a.inst,score:100,status:'found',note:'',fromReg:true,scope:l.scope,nomAtInst:a.nomAtInst,
       ref:l.scope==='Full detail'?(a.ref||''):'',
       why:(a.nomAtInst==='yes'?'Recorded in their registry. A nomination is registered, so the claim route is short.':'Recorded in their registry. No nomination at the institution, so expect a legal heir certificate.')
         +(l.scope==='Existence only'?' They chose to show you that it exists, not the account details.':l.scope==='Claim guidance only'?' They shared how to claim it, not the account details.':'')};
@@ -1027,15 +1558,28 @@ function lookupView(){
 function modal(html){ document.getElementById('modal').innerHTML = html?`<div class="scrim" data-close>${html}</div>`:''; }
 function closeModal(){ modal(''); }
 
-function mAsset(){
+const VIA_HINT = {
+  nom:'This decides whether your family needs a succession certificate. Banks now allow up to four nominees with a share for each (November 2025).',
+  will:'There is no nomination system for this (housing-society nominations hold the flat for your heirs, not for the nominee). It passes by your will, or by succession law if there is none.',
+  debt:'Your family is not personally liable for this unless they co-signed. Record it so they know to inform the lender and claim any insurance attached to it.'
+};
+const IFSC_TYPES = ['bank','locker','pmjjby','ppf'];
+function mAsset(type){
+  const t0=type||'bank', groups=[...new Set(TYPES.map(t=>t.g))];
   return `<div class="sheet"><h2>Add a holding</h2><p class="sub" style="margin-bottom:16px">Where it is, not what it is worth.</p>
-    <div class="field"><label>Type</label><select id="f-type">${TYPES.map(t=>`<option value="${t.k}">${t.t}</option>`).join('')}</select></div>
-    <div class="field"><label>Institution</label><select id="f-inst">${INST.bank.map(i=>`<option>${i}</option>`).join('')}</select></div>
+    <div class="field"><label>Type</label><select id="f-type">${groups.map(g=>`<optgroup label="${g}">${TYPES.filter(t=>t.g===g).map(t=>`<option value="${t.k}" ${t.k===t0?'selected':''}>${t.t}</option>`).join('')}</optgroup>`).join('')}</select></div>
+    <div class="field"><label>Institution</label><select id="f-inst">${(INST[t0]||['Other']).map(i=>`<option>${i}</option>`).join('')}</select></div>
+    <div class="field" id="f-ifsc-wrap" style="${IFSC_TYPES.includes(t0)?'':'display:none'}"><label>Branch IFSC <span style="font-weight:400;color:var(--faint)">optional &middot; from a cheque or passbook</span></label>
+      <div class="inline"><input id="f-ifsc" maxlength="11" placeholder="SBIN0000300" style="text-transform:uppercase" autocomplete="off"><button class="btn sec sm" data-ifsc-asset>Look up</button></div>
+      <div id="f-ifsc-out" class="hint"></div></div>
     <div class="field"><label>Identifier <span style="font-weight:400;color:var(--faint)">optional</span></label>
-      <input id="f-ref" placeholder="Account, folio or policy number"><div class="hint">Partial is fine. &ldquo;LIC, number unknown&rdquo; still beats nothing.</div></div>
+      <input id="f-ref" placeholder="Account, folio, policy, UAN or survey number"><div class="hint">Partial is fine. &ldquo;LIC, number unknown&rdquo; still beats nothing.</div></div>
     <div class="field"><label>Is a nomination registered at the institution?</label>
       <select id="f-nom"><option value="unknown">I don&rsquo;t know</option><option value="yes">Yes</option><option value="no">No</option></select>
-      <div class="hint">This is the field that decides whether your family needs a succession certificate.</div></div>
+      <div class="hint" id="f-via">${VIA_HINT[TYPE_OF(t0).via]}</div></div>
+    ${S.people.length?`<div class="field"><label>Who is the nominee there? <span style="font-weight:400;color:var(--faint)">optional</span></label>
+      <select id="f-nomp"><option value="">Not sure, or not listed</option>${S.people.map(p=>`<option value="${p.id}">${esc(p.name)} (${esc(p.rel)})</option>`).join('')}</select>
+      <div class="hint">Used to check whether the nominee is also your heir.</div></div>`:''}
     <div class="act"><button class="btn sec" data-close-btn>Cancel</button><button class="btn" data-save="asset">Add holding</button></div></div>`;
 }
 function mProfile(){
@@ -1104,13 +1648,16 @@ function seedRegistry(){
   const p3={id:uid(),name:'Meera Sharma',rel:'Daughter',phone:''};
   S.people=[p1,p2,p3];
   const a=[
-    {id:uid(),type:'bank',inst:'HDFC Bank',ref:'XXXX 4417 — salary account',nomAtInst:'yes'},
+    {id:uid(),type:'bank',inst:'HDFC Bank',ref:'XXXX 4417 — salary account',nomAtInst:'yes',nomPerson:p1.id},
     {id:uid(),type:'bank',inst:'State Bank of India',ref:'FD, Nagpur branch',nomAtInst:'no'},
-    {id:uid(),type:'insurance',inst:'LIC of India',ref:'Policy 892… (number incomplete)',nomAtInst:'yes'},
+    {id:uid(),type:'insurance',inst:'LIC of India',ref:'Policy 892… (number incomplete)',nomAtInst:'yes',nomPerson:p1.id},
     {id:uid(),type:'mf',inst:'Nippon India MF',ref:'Folio 10294417',nomAtInst:'unknown'},
-    {id:uid(),type:'demat',inst:'Zerodha',ref:'DP ID 1208…',nomAtInst:'yes'},
+    {id:uid(),type:'demat',inst:'Zerodha',ref:'DP ID 1208…',nomAtInst:'yes',nomPerson:p2.id},
     {id:uid(),type:'epf',inst:'EPFO',ref:'UAN 1002 3344 5566',nomAtInst:'no'},
-    {id:uid(),type:'post',inst:'India Post',ref:'NSC, bought 2016',nomAtInst:'unknown'}
+    {id:uid(),type:'post',inst:'India Post',ref:'NSC, bought 2016',nomAtInst:'unknown'},
+    {id:uid(),type:'eps',inst:'EPFO',ref:'EPS-95, same UAN',nomAtInst:'yes',nomPerson:p1.id},
+    {id:uid(),type:'property',inst:'Owned house or flat',ref:'Flat 4B, Dharampeth, Nagpur',nomAtInst:'no'},
+    {id:uid(),type:'locker',inst:'State Bank of India',ref:'Locker 212, Dharampeth branch',nomAtInst:'unknown'}
   ];
   S.assets=a;
   S.links=[
@@ -1122,8 +1669,13 @@ function seedRegistry(){
     {id:uid(),asset:a[5].id,person:p1.id,scope:'Claim guidance only'},
     {id:uid(),asset:a[0].id,person:p2.id,scope:'Full detail'},
     {id:uid(),asset:a[2].id,person:p2.id,scope:'Existence only'},
-    {id:uid(),asset:a[5].id,person:p2.id,scope:'Claim guidance only'}
+    {id:uid(),asset:a[5].id,person:p2.id,scope:'Claim guidance only'},
+    {id:uid(),asset:a[7].id,person:p1.id,scope:'Claim guidance only'},
+    {id:uid(),asset:a[8].id,person:p1.id,scope:'Full detail'},
+    {id:uid(),asset:a[8].id,person:p3.id,scope:'Existence only'},
+    {id:uid(),asset:a[9].id,person:p1.id,scope:'Full detail'}
   ];
+  S.succ={law:'hindu',gender:'male',will:'none',executor:''};
   S.reporters=[p1.id,p2.id];
   S.profile={name:'Ramesh Kumar Sharma',pan:'ABCPS1234K'};
   logit('Sample registry loaded');
@@ -1153,6 +1705,14 @@ function bind(){
   q('[data-gt]',b=>b.onclick=()=>{S.guideTab=b.dataset.gt;render()});
   q('[data-guide]',b=>b.onclick=()=>{S.guideTab=b.dataset.guide;S.view='v-guides';render()});
   q('[data-portal]',b=>b.onclick=()=>{modal(mPortal(b.dataset.portal));bindModal()});
+  q('[data-route]',b=>b.onclick=()=>{modal(mRoute(b.dataset.route));bindModal()});
+  q('[data-add-type]',b=>b.onclick=()=>{modal(mAsset(b.dataset.addType));bindModal()});
+  q('[data-live]',b=>b.onclick=()=>runLive(b.dataset.live));
+  ['ifsc','pin','mf'].forEach(k=>{const i=el.querySelector('#lv-'+k); if(i) i.onkeydown=e=>{if(e.key==='Enter')runLive(k)}});
+  q('[data-ask]',b=>b.onclick=()=>askAI(b.dataset.ask));
+  const ai=el.querySelector('#ask-in'); if(ai) ai.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askAI(ai.value)}};
+  [['#sc-law','law'],['#sc-gender','gender'],['#sc-will','will']].forEach(([sel,k])=>{const x=el.querySelector(sel);
+    if(x) x.onchange=()=>{S.succ={...S.succ,[k]:x.value};logit('Succession details updated: '+k);save();render()}});
   q('[data-copy]',b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy).then(()=>toast('Copied')).catch(()=>toast('Copy blocked'))});
 
   q('[data-act]',b=>b.onclick=()=>{
@@ -1189,6 +1749,8 @@ function bind(){
     else if(a==='second-report'){S.lookup.second=true;logit('Second death report received');save();render()}
     else if(a==='release-reg'){releaseRegistry();save();render();toast('Record opened')}
     else if(a==='extend-search'){S.step=0;S.view='v-intake';render()}
+    else if(a==='ask'){const i=el.querySelector('#ask-in');askAI(i&&i.value)}
+    else if(a==='ask-clear'){S.chat=[];save();render()}
     else if(a==='inbox'){S.view='r-inbox';logit('Nominee view opened');save();render()}
     else if(a==='reset'){if(S.assets.length||S.leads.length){modal(`<div class="sheet"><h2>Reset the prototype?</h2>
       <p class="sub" style="margin:6px 0 2px">This clears everything you have entered in both journeys. It cannot be undone.</p>
@@ -1223,13 +1785,26 @@ function bindModal(){
   m.querySelectorAll('[data-act="add-person"]').forEach(b=>b.onclick=()=>{modal(mPerson());bindModal()});
 
   const ft=m.querySelector('#f-type'), fi=m.querySelector('#f-inst');
-  if(ft&&fi) ft.onchange=()=>{fi.innerHTML=(INST[ft.value]||['Other']).map(i=>`<option>${i}</option>`).join('')};
+  if(ft&&fi) ft.onchange=()=>{fi.innerHTML=(INST[ft.value]||['Other']).map(i=>`<option>${i}</option>`).join('');
+    const v=m.querySelector('#f-via'); if(v) v.textContent=VIA_HINT[TYPE_OF(ft.value).via];
+    const w=m.querySelector('#f-ifsc-wrap'); if(w) w.style.display=IFSC_TYPES.includes(ft.value)?'':'none';};
+  const ib=m.querySelector('[data-ifsc-asset]');
+  if(ib) ib.onclick=async()=>{
+    const out=m.querySelector('#f-ifsc-out'); out.textContent='Looking up…';
+    const r=await lookupIFSC(m.querySelector('#f-ifsc').value);
+    if(!r.ok){out.textContent=r.msg;return}
+    const b=r.data; out.innerHTML=`<span class="badge live-badge">Live</span> ${esc(b.BANK)}, ${esc(b.BRANCH)} &middot; ${esc(b.CITY)}, ${esc(b.STATE)}`;
+    const opt=[...fi.options].find(o=>o.value.toLowerCase()===String(b.BANK).toLowerCase());
+    if(opt) fi.value=opt.value; else { fi.insertAdjacentHTML('afterbegin',`<option>${esc(b.BANK)}</option>`); fi.value=b.BANK; }
+    const ref=m.querySelector('#f-ref'); if(!ref.value) ref.value=`${b.BRANCH} branch, ${b.CITY} (IFSC ${b.IFSC})`;
+  };
 
   m.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{
     const k=b.dataset.save;
     if(k==='asset'){
       const t=m.querySelector('#f-type').value;
-      S.assets.push({id:uid(),type:t,inst:m.querySelector('#f-inst').value,ref:m.querySelector('#f-ref').value.trim(),nomAtInst:m.querySelector('#f-nom').value});
+      const np=m.querySelector('#f-nomp');
+      S.assets.push({id:uid(),type:t,inst:m.querySelector('#f-inst').value,ref:m.querySelector('#f-ref').value.trim(),nomAtInst:m.querySelector('#f-nom').value,nomPerson:np?np.value:''});
       logit('Holding added');toast('Holding added');
     }
     else if(k==='person'){
@@ -1265,7 +1840,8 @@ function bindModal(){
     }
     else if(k==='reset'){
       S={...S, journey:null,view:null,assets:[],people:[],links:[],reporters:[],event:null,log:[],
-         intake:{},step:0,leads:[],docs:{},trace:[],evidence:{},filter:'all',profile:{},lookup:null};
+         intake:{},step:0,leads:[],docs:{},trace:[],evidence:{},filter:'all',profile:{},lookup:null,
+         succ:{law:'hindu',gender:'male',will:'none',executor:''},chat:[],live:{}};
       try{localStorage.removeItem('amanat_v1')}catch(e){}
       toast('Prototype reset');
     }

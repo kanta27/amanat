@@ -54,7 +54,7 @@ const check = (name, cond, extra='') => {
   check('R1 registry opens empty', text().includes('Your registry is empty'));
 
   click('[data-act="seed"]'); await wait(120);
-  check('R2 sample registry loads', text().includes('7 holdings recorded'), text().slice(0,160));
+  check('R2 sample registry loads', text().includes('10 holdings recorded'), text().slice(0,160));
 
   // readiness must be a real number, not NaN
   const ringNum = $('.ring .num b');
@@ -72,9 +72,9 @@ const check = (name, cond, extra='') => {
 
   // holdings list
   click('[data-v="r-assets"]'); await wait(80);
-  check('R7 holdings list renders', $$('[data-link]').length === 7, 'links ' + $$('[data-link]').length);
+  check('R7 holdings list renders', $$('[data-link]').length === 10, 'links ' + $$('[data-link]').length);
   check('R8 nomination status shown', text().includes('No nomination registered'));
-  check('R9 no balances anywhere', !/₹\s?\d/.test(text().replace(/2\.2 lakh crore/g,'')), 'found a rupee amount');
+  check('R9 no balances anywhere', !/₹\s?\d/.test($('.content').textContent), 'found a rupee amount');
 
   // add a holding through the real modal
   click('[data-act="add-asset"]'); await wait(60);
@@ -125,7 +125,7 @@ const check = (name, cond, extra='') => {
   click('[data-act="release"]'); await wait(100);
   check('R23 disclosure releases', text().includes('Disclosure released'));
   click('[data-act="inbox"]'); await wait(100);
-  check('R24 nominee view renders', text().includes('sees') && text().includes('of 8 holdings'), text().match(/sees \d+ of \d+ holdings/)?.[0]);
+  check('R24 nominee view renders', text().includes('sees') && text().includes('of 11 holdings'), text().match(/sees \d+ of \d+ holdings/)?.[0]);
   check('R25 scope respected in nominee view', text().includes('Existence only'));
   check('R26 claim route differs by nomination', text().includes('needs a legal heir certificate') && text().includes('short claim route'));
 
@@ -136,15 +136,15 @@ const check = (name, cond, extra='') => {
 
   // interview
   click('[data-act="start-q"]'); await wait(80);
-  check('V2 interview starts at q1', text().includes('Question 1 of 11'));
+  check('V2 interview starts at q1', text().includes('Question 1 of 16'));
   $('#qin').value = 'Ramesh Kumar Sharma';
   click('[data-act="q-next"]'); await wait(80);
-  check('V3 advances to q2', text().includes('Question 2 of 11'));
+  check('V3 advances to q2', text().includes('Question 2 of 16'));
   check('V4 choice options render', $$('[data-opt]').length === 6, 'opts ' + $$('[data-opt]').length);
   click($$('[data-opt]')[1]); await wait(80);
-  check('V5 choice advances', text().includes('Question 3 of 11'));
+  check('V5 choice advances', text().includes('Question 3 of 16'));
   click('[data-act="q-back"]'); await wait(80);
-  check('V6 back works', text().includes('Question 2 of 11'));
+  check('V6 back works', text().includes('Question 2 of 16'));
 
   // bail out of the interview and load the sample case instead
   click('[data-v="v-plan"]'); await wait(80);
@@ -213,12 +213,12 @@ const check = (name, cond, extra='') => {
 
   // documents
   click('[data-v="v-docs"]'); await wait(80);
-  check('V30 documents checklist renders', $$('[data-doc]').length === 8, 'docs ' + $$('[data-doc]').length);
+  check('V30 documents checklist renders', $$('[data-doc]').length === 14, 'docs ' + $$('[data-doc]').length);
   check('V31 slow documents flagged', text().includes('Slow to obtain'));
-  const before = text().match(/(\d) of 8 in hand/)[1];
+  const before = text().match(/(\d+) of 14 in hand/)[1];
   const dbox = $$('[data-doc]').find(d => !d.checked);
   dbox.checked = true; dbox.dispatchEvent(new window.Event('change', { bubbles: true })); await wait(100);
-  const after = text().match(/(\d) of 8 in hand/)[1];
+  const after = text().match(/(\d+) of 14 in hand/)[1];
   check('V32 document counter increments', +after === +before + 1, before + ' -> ' + after);
   check('V33 nominee vs heir routes explained', text().includes('Registered nominee') && text().includes('No nomination'));
 
@@ -227,7 +227,7 @@ const check = (name, cond, extra='') => {
   const saved = window.localStorage.getItem('amanat_v1');
   check('P1 state written to storage', !!saved);
   const parsed = saved ? JSON.parse(saved) : {};
-  check('P2 holdings persisted', (parsed.assets || []).length === 8, 'assets ' + (parsed.assets||[]).length);
+  check('P2 holdings persisted', (parsed.assets || []).length === 11, 'assets ' + (parsed.assets||[]).length);
   check('P3 leads persisted', (parsed.leads || []).length >= 10);
   check('P4 docs persisted', Object.values(parsed.docs || {}).filter(Boolean).length >= 5);
 

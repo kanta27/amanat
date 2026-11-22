@@ -4,7 +4,7 @@
   "private": true,
   "description": "Amanat: find and protect a family's financial assets. Product case study prototype.",
   "scripts": {
-    "test": "node tests/core.test.js && node tests/registry-lookup.test.js"
+    "test": "node tests/core.test.js && node tests/registry-lookup.test.js && node tests/succession-live.test.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"
